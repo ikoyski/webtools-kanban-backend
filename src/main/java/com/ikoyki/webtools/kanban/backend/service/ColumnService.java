@@ -1,5 +1,6 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
+import com.ikoyki.webtools.kanban.backend.dto.request.ReorderColumnsRequest;
 import com.ikoyki.webtools.kanban.backend.entity.Card;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.exception.ColumnNotEmptyException;
@@ -45,10 +46,15 @@ public class ColumnService {
     }
 
     @Transactional
-    public void reorderColumns(List<ColumnRepository.PositionUpdate> updates) {
-        // Note: I need to define PositionUpdate in ColumnRepository or as a DTO.
-        // Let's use a simple map or similar.
-        // For now, I'll implement the logic using a list of entities.
+    public void reorderColumns(List<ReorderColumnsRequest.ColumnPosition> updates) {
+        List<ColumnEntity> columns = new ArrayList<>();
+        for (ReorderColumnsRequest.ColumnPosition update : updates) {
+            ColumnEntity column = columnRepository.findById(update.getId())
+                    .orElseThrow(() -> new RuntimeException("Column not found: " + update.getId()));
+            column.setPosition(update.getPosition());
+            columns.add(column);
+        }
+        columnRepository.saveAll(columns);
     }
 
     @Transactional

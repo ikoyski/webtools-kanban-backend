@@ -40,7 +40,7 @@ public class ColumnController {
 
     @PatchMapping("/reorder")
     public ResponseEntity<Void> reorderColumns(@RequestBody ReorderColumnsRequest request) {
-        // Logic for bulk reorder can be added here
+        columnService.reorderColumns(request.getColumns());
         return ResponseEntity.ok().build();
     }
 }
