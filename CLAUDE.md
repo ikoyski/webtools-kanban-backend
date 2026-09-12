@@ -3,8 +3,10 @@
 ## Project Overview
 Spring Boot 3 backend for a Kanban board application.
 - **Java Version**: 21
-- **Framework**: Spring Boot 3.3.3
+- **Framework**: Spring Boot 3.4.2
+- **Cloud**: Spring Cloud (Eureka, Config)
 - **Database**: PostgreSQL 17 (using JSONB for labels)
+- **Observability**: Micrometer Tracing (Brave, Zipkin)
 - **Schema Management**: Flyway
 - **API**: RESTful, versioned at `/api/v1`
 - **Package**: `com.ikoyki.webtools.kanban.backend`
