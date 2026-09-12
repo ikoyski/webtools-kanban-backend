@@ -5,12 +5,13 @@ A Spring Boot 3 backend for the WebTools Kanban board application. This service 
 ## 🚀 Tech Stack
 
 - **Language**: Java 21
-- **Framework**: Spring Boot 3.3.3
+- **Framework**: Spring Boot 3.4.2
+- **Cloud**: Spring Cloud (Eureka, Config)
 - **Build Tool**: Maven
 - **Database**: PostgreSQL 17
 - **Migrations**: Flyway
 - **API Documentation**: SpringDoc OpenAPI (Swagger UI)
-- **Observability**: Spring Boot Actuator
+- **Observability**: Spring Boot Actuator, Micrometer Tracing (Brave, Zipkin)
 
 ## 🛠️ Setup & Installation
 
@@ -35,7 +36,7 @@ The server will start on `http://localhost:8080`.
 ## 📖 API Documentation
 
 Once the application is running, you can access the interactive API documentation (Swagger UI) at:
-`http://localhost:8080/swagger-ui.html`
+`http://localhost:8080/swagger-ui/index.html`
 
 ### Base URL
 `http://localhost:8080/api/v1`
