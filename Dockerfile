@@ -1,3 +1,10 @@
+# Stage 1: build the jar
+FROM maven:3.9-eclipse-temurin-21 AS build
+COPY pom.xml
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Stage 2: run it
 FROM eclipse-temurin:21-jre-jammy
 EXPOSE 8080
 ADD target/*.jar app.jar
