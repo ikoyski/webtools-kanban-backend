@@ -7,7 +7,7 @@ A Spring Boot 3 backend for the WebTools Kanban board application. This service 
 - **Language**: Java 21
 - **Framework**: Spring Boot 3.3.3
 - **Build Tool**: Maven
-- **Database**: PostgreSQL 18
+- **Database**: PostgreSQL 17
 - **Migrations**: Flyway
 - **API Documentation**: SpringDoc OpenAPI (Swagger UI)
 - **Observability**: Spring Boot Actuator
