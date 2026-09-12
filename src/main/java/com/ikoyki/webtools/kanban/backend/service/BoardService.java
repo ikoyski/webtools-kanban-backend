@@ -37,8 +37,8 @@ public class BoardService {
                 .orElseThrow(() -> new RuntimeException("Board not found"));
 
         // Transactionally replace all
-        cardRepository.deleteByBoardId(boardId); // Need to add this method to CardRepository
-        columnRepository.deleteByBoardId(boardId); // Need to add this method to ColumnRepository
+        cardRepository.deleteByColumn_Board_Id(boardId);
+        columnRepository.deleteByBoardId(boardId);
 
         if (request.getName() != null) {
             board.setName(request.getName());

@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,7 +63,7 @@ class BoardServiceTest {
 
         // Assert
         assertEquals("New Name", result.getName());
-        verify(cardRepository).deleteByBoardId(1L);
+        verify(cardRepository).deleteByColumn_Board_Id(1L);
         verify(columnRepository).deleteByBoardId(1L);
         verify(columnRepository).save(any());
         verify(cardRepository).save(any());

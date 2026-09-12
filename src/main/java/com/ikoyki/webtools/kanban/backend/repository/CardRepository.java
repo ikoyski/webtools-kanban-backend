@@ -12,5 +12,5 @@ public interface CardRepository extends JpaRepository<Card, UUID> {
     List<Card> findByColumnIdOrderByPositionAsc(UUID columnId);
 
     @Transactional
-    void deleteByBoardId(Long boardId);
+    void deleteByColumn_Board_Id(Long boardId);
 }

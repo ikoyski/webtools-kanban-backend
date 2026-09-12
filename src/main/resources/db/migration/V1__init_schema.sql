@@ -4,21 +4,23 @@ CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
 DECLARE
   timestamp_ms bigint;
   random_bytes bytea;
+  hex_str      text;
 BEGIN
   timestamp_ms := (extract(epoch from clock_timestamp()) * 1000)::bigint;
   random_bytes := gen_random_bytes(10);
+  hex_str := encode(random_bytes, 'hex');
 
   RETURN (
     lpad(to_hex(timestamp_ms), 12, '0') ||
     '7' ||
-    substring(encode(random_bytes from 'hex'), 1, 3) ||
+    substring(hex_str from 1 for 3) ||
     (case (get_byte(random_bytes, 6) & 0x3)
       when 0 then '8'
       when 1 then '9'
       when 2 then 'a'
       else 'b'
      end) ||
-    substring(encode(random_bytes from 'hex'), 4, 12)
+    substring(hex_str from 4 for 15)
   )::uuid;
 END;
 $$ LANGUAGE plpgsql VOLATILE;
