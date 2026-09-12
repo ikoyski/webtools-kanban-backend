@@ -2,7 +2,6 @@ package com.ikoyki.webtools.kanban.backend.dto.request;
 
 import lombok.*;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @Builder
