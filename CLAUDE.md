@@ -7,6 +7,7 @@ Spring Boot 3 backend for a Kanban board application.
 - **Cloud**: Spring Cloud (Eureka, Config)
 - **Database**: PostgreSQL 17 (using JSONB for labels)
 - **Observability**: Micrometer Tracing (Brave, Zipkin)
+- **Quality Analysis**: Monitored via SonarCloud for bugs, vulnerabilities, and code smells.
 - **Schema Management**: Flyway
 - **API**: RESTful, versioned at `/api/v1`
 - **Package**: `com.ikoyki.webtools.kanban.backend`

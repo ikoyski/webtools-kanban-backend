@@ -49,6 +49,10 @@ Once the application is running, you can access the interactive API documentatio
 - `PATCH /cards/{id}/move`: Move a card within or across columns.
 - `PUT /board/import`: Transactionally replace entire board state.
 
+## 🛡️ Quality Assurance
+
+The project is automatically analyzed for bugs, vulnerabilities, and code smells as part of the CI pipeline via GitHub Actions. You can view the current quality status and detailed reports on the [SonarCloud Summary Page](https://sonarcloud.io/summary/overall?id=ikoyski_webtools-kanban-backend).
+
 ## 📉 Database Schema
 
 - `board`: Top-level board metadata.
