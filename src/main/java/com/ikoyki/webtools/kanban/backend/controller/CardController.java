@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/kanban-backend/v1/cards")
+@RequestMapping("/v1/cards")
 @RequiredArgsConstructor
 public class CardController {
     private final CardService cardService;
