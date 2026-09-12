@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/board")
+@RequestMapping("/kanban-backend/v1/board")
 @RequiredArgsConstructor
 public class BoardController {
     private final BoardService boardService;

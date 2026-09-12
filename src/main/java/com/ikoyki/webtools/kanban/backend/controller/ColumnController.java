@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/columns")
+@RequestMapping("/kanban-backend/v1/columns")
 @RequiredArgsConstructor
 public class ColumnController {
     private final ColumnService columnService;
