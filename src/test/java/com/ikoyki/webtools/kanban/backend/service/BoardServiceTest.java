@@ -35,10 +35,11 @@ class BoardServiceTest {
 
     @Test
     void getBoard_Success() {
-        BoardEntity board = BoardEntity.builder().id(1L).name("Test Board").build();
-        when(boardRepository.findById(1L)).thenReturn(Optional.of(board));
+        UUID boardId = UUID.randomUUID();
+        BoardEntity board = BoardEntity.builder().id(boardId).name("Test Board").build();
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
 
-        BoardEntity result = boardService.getBoard(1L);
+        BoardEntity result = boardService.getBoard(boardId);
 
         assertEquals("Test Board", result.getName());
     }
@@ -46,8 +47,9 @@ class BoardServiceTest {
     @Test
     void importBoard_ValidRequest_ReplacesData() {
         // Arrange
-        BoardEntity board = BoardEntity.builder().id(1L).name("Old Name").build();
-        when(boardRepository.findById(1L)).thenReturn(Optional.of(board));
+        UUID boardId = UUID.randomUUID();
+        BoardEntity board = BoardEntity.builder().id(UUID.randomUUID()).name("Old Name").build();
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
 
         ImportBoardRequest.ColumnImport colImp = ImportBoardRequest.ColumnImport.builder()
                 .title("New Col")
@@ -59,12 +61,12 @@ class BoardServiceTest {
                 .build();
 
         // Act
-        BoardEntity result = boardService.importBoard(1L, request);
+        BoardEntity result = boardService.importBoard(boardId, request);
 
         // Assert
         assertEquals("New Name", result.getName());
-        verify(cardRepository).deleteByColumn_Board_Id(1L);
-        verify(columnRepository).deleteByBoardId(1L);
+        verify(cardRepository).deleteByColumn_Board_Id(boardId);
+        verify(columnRepository).deleteByBoardId(boardId);
         verify(columnRepository).save(any());
         verify(cardRepository).save(any());
     }
@@ -72,14 +74,15 @@ class BoardServiceTest {
     @Test
     void importBoard_InvalidRequest_ThrowsException() {
         // Arrange
-        BoardEntity board = BoardEntity.builder().id(1L).build();
-        when(boardRepository.findById(1L)).thenReturn(Optional.of(board));
+        UUID boardId = UUID.randomUUID();
+        BoardEntity board = BoardEntity.builder().id(UUID.randomUUID()).build();
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
 
         ImportBoardRequest request = ImportBoardRequest.builder()
                 .columns(List.of(ImportBoardRequest.ColumnImport.builder().title("").build())) // Invalid title
                 .build();
 
         // Act & Assert
-        assertThrows(InvalidImportException.class, () -> boardService.importBoard(1L, request));
+        assertThrows(InvalidImportException.class, () -> boardService.importBoard(boardId, request));
     }
 }

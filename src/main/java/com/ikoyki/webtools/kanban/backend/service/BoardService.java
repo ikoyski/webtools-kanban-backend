@@ -22,13 +22,13 @@ public class BoardService {
     private final CardRepository cardRepository;
 
     @Transactional(readOnly = true)
-    public BoardEntity getBoard(Long id) {
+    public BoardEntity getBoard(UUID id) {
         return boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Board not found"));
     }
 
     @Transactional
-    public BoardEntity importBoard(Long boardId, ImportBoardRequest request) {
+    public BoardEntity importBoard(UUID boardId, ImportBoardRequest request) {
         if (request.getColumns() == null) {
             throw new InvalidImportException("Columns list cannot be null");
         }

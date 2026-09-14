@@ -9,7 +9,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BoardResponse {
-    private Long id;
+    private UUID id;
     private String name;
     private Map<UUID, ColumnResponse> columns;
     private Map<UUID, CardResponse> cards;

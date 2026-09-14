@@ -18,7 +18,7 @@ public class ColumnService {
     private final CardRepository cardRepository;
 
     @Transactional
-    public ColumnEntity createColumn(Long boardId, String title) {
+    public ColumnEntity createColumn(UUID boardId, String title) {
         List<ColumnEntity> existing = columnRepository.findByBoardIdOrderByPositionAsc(boardId);
         int position = existing.size();
 

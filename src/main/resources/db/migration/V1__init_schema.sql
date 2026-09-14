@@ -26,15 +26,14 @@ END;
 $$ LANGUAGE plpgsql VOLATILE;
 
 CREATE TABLE board (
-
-    id          BIGSERIAL PRIMARY KEY,
+    id          UUID PRIMARY KEY DEFAULT uuidv7(),
     name        TEXT NOT NULL DEFAULT 'My Board',
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE column_entity (
     id          UUID PRIMARY KEY DEFAULT uuidv7(),
-    board_id    BIGINT NOT NULL REFERENCES board(id) ON DELETE CASCADE,
+    board_id    UUID NOT NULL REFERENCES board(id) ON DELETE CASCADE,
     title       TEXT NOT NULL,
     position    INTEGER NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -44,7 +44,7 @@ class ColumnServiceTest {
     @Test
     void createColumn_SetsCorrectPosition() {
         // Arrange
-        Long boardId = 1L;
+        UUID boardId = UUID.randomUUID();
         List<ColumnEntity> existing = List.of(new ColumnEntity(), new ColumnEntity());
         when(columnRepository.findByBoardIdOrderByPositionAsc(boardId)).thenReturn(existing);
         when(columnRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);

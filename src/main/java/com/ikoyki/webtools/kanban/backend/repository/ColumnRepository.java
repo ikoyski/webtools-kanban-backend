@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface ColumnRepository extends JpaRepository<ColumnEntity, UUID> {
-    List<ColumnEntity> findByBoardIdOrderByPositionAsc(Long boardId);
+    List<ColumnEntity> findByBoardIdOrderByPositionAsc(UUID boardId);
 
     @Transactional
-    void deleteByBoardId(Long boardId);
+    void deleteByBoardId(UUID boardId);
 }

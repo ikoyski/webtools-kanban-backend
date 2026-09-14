@@ -20,7 +20,7 @@ public class ColumnController {
 
     @PostMapping
     public ResponseEntity<ColumnResponse> createColumn(@Valid @RequestBody CreateColumnRequest request) {
-        ColumnEntity column = columnService.createColumn(1L, request.getTitle());
+        ColumnEntity column = columnService.createColumn(UUID.randomUUID(), request.getTitle());
         return ResponseEntity.ok(boardMapper.toColumnResponse(column));
     }
 
