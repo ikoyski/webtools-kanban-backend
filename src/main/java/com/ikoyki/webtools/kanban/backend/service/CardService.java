@@ -1,8 +1,8 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
-import com.ikoyki.webtools.kanban.backend.entity.Card;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntityEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
-import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
+import com.ikoyki.webtools.kanban.backend.repository.CardEntityRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,19 +11,19 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class CardService {
-    private final CardRepository cardRepository;
+public class CardEntityService {
+    private final CardEntityRepository cardRepository;
     private final ColumnRepository columnRepository;
 
     @Transactional
-    public Card createCard(UUID columnId, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
+    public CardEntity createCardEntity(UUID columnId, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
         ColumnEntity column = columnRepository.findById(columnId)
                 .orElseThrow(() -> new RuntimeException("Column not found"));
 
-        List<Card> siblings = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
+        List<CardEntity> siblings = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
         int position = siblings.size();
 
-        Card card = Card.builder()
+        CardEntity card = CardEntity.builder()
                 .column(column)
                 .title(title)
                 .description(description != null ? description : "")
@@ -37,9 +37,9 @@ public class CardService {
     }
 
     @Transactional
-    public Card updateCard(UUID id, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
-        Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+    public CardEntity updateCardEntity(UUID id, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
+        CardEntity card = cardRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("CardEntity not found"));
 
         if (title != null) card.setTitle(title);
         if (description != null) card.setDescription(description);
@@ -51,24 +51,24 @@ public class CardService {
     }
 
     @Transactional
-    public void deleteCard(UUID id) {
-        Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+    public void deleteCardEntity(UUID id) {
+        CardEntity card = cardRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("CardEntity not found"));
 
         UUID columnId = card.getColumn().getId();
         cardRepository.delete(card);
-        reindexCards(columnId);
+        reindexCardEntitys(columnId);
     }
 
     @Transactional
-    public Card moveCard(UUID cardId, UUID destColumnId, Integer destPosition) {
-        Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+    public CardEntity moveCardEntity(UUID cardId, UUID destColumnId, Integer destPosition) {
+        CardEntity card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("CardEntity not found"));
 
         UUID sourceColumnId = card.getColumn().getId();
 
         if (sourceColumnId.equals(destColumnId)) {
-            List<Card> siblings = cardRepository.findByColumnIdOrderByPositionAsc(sourceColumnId);
+            List<CardEntity> siblings = cardRepository.findByColumnIdOrderByPositionAsc(sourceColumnId);
             siblings.remove(card);
 
             // Ensure position is within bounds
@@ -78,7 +78,7 @@ public class CardService {
             reassignPositions(siblings);
         } else {
             // Remove from source
-            List<Card> sourceSiblings = cardRepository.findByColumnIdOrderByPositionAsc(sourceColumnId);
+            List<CardEntity> sourceSiblings = cardRepository.findByColumnIdOrderByPositionAsc(sourceColumnId);
             sourceSiblings.remove(card);
             reassignPositions(sourceSiblings);
 
@@ -86,7 +86,7 @@ public class CardService {
             ColumnEntity destColumn = columnRepository.findById(destColumnId)
                     .orElseThrow(() -> new RuntimeException("Destination column not found"));
 
-            List<Card> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(destColumnId);
+            List<CardEntity> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(destColumnId);
             int pos = Math.min(destPosition, destSiblings.size());
 
             card.setColumn(destColumn);
@@ -97,12 +97,12 @@ public class CardService {
         return cardRepository.save(card);
     }
 
-    private void reindexCards(UUID columnId) {
-        List<Card> siblings = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
+    private void reindexCardEntitys(UUID columnId) {
+        List<CardEntity> siblings = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
         reassignPositions(siblings);
     }
 
-    private void reassignPositions(List<Card> cards) {
+    private void reassignPositions(List<CardEntity> cards) {
         for (int i = 0; i < cards.size(); i++) {
             cards.get(i).setPosition(i);
         }

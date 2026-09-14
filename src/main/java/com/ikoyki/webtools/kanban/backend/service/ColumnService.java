@@ -1,10 +1,10 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
 import com.ikoyki.webtools.kanban.backend.dto.request.ReorderColumnsRequest;
-import com.ikoyki.webtools.kanban.backend.entity.Card;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.exception.ColumnNotEmptyException;
-import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
+import com.ikoyki.webtools.kanban.backend.repository.CardEntityRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,16 +15,16 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ColumnService {
     private final ColumnRepository columnRepository;
-    private final CardRepository cardRepository;
+    private final CardEntityRepository cardRepository;
 
     @Transactional
     public ColumnEntity createColumn(Long boardId, String title) {
         List<ColumnEntity> existing = columnRepository.findByBoardIdOrderByPositionAsc(boardId);
         int position = existing.size();
 
-        // We need a Board object for the relation
+        // We need a BoardEntity object for the relation
         // For v1 we assume board 1 exists
-        com.ikoyki.webtools.kanban.backend.entity.Board board = new com.ikoyki.webtools.kanban.backend.entity.Board();
+        com.ikoyki.webtools.kanban.backend.entity.BoardEntity board = new com.ikoyki.webtools.kanban.backend.entity.BoardEntity();
         board.setId(boardId);
 
         ColumnEntity column = ColumnEntity.builder()
@@ -61,7 +61,7 @@ public class ColumnService {
         ColumnEntity column = columnRepository.findById(columnId)
                 .orElseThrow(() -> new RuntimeException("Column not found"));
 
-        List<Card> cards = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
+        List<CardEntity> cards = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
 
         if (!cards.isEmpty()) {
             if (transferToId == null) {
@@ -74,9 +74,9 @@ public class ColumnService {
             ColumnEntity destColumn = columnRepository.findById(transferToId)
                     .orElseThrow(() -> new RuntimeException("Destination column not found"));
 
-            List<Card> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(transferToId);
+            List<CardEntity> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(transferToId);
 
-            for (Card card : cards) {
+            for (CardEntity card : cards) {
                 card.setColumn(destColumn);
                 destSiblings.add(card);
             }

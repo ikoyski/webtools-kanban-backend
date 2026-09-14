@@ -23,7 +23,7 @@ public class ColumnEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
-    private Board board;
+    private BoardEntity board;
 
     @Column(nullable = false)
     private String title;
@@ -31,9 +31,10 @@ public class ColumnEntity {
     @Column(nullable = false)
     private Integer position;
 
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @OneToMany(mappedBy = "column", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Card> cards;
+    private List<CardEntity> cards;
 }

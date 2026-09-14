@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class BoardMapper {
-    public BoardResponse toResponse(Board board) {
+    public BoardResponse toResponse(BoardEntity board) {
         if (board == null) return null;
         return BoardResponse.builder()
                 .id(board.getId())
@@ -34,14 +34,14 @@ public class BoardMapper {
                 .build();
     }
 
-    private List<CardResponse> mapCards(List<Card> cards) {
+    private List<CardResponse> mapCards(List<CardEntity> cards) {
         if (cards == null) return null;
         return cards.stream()
                 .map(this::toCardResponse)
                 .collect(Collectors.toList());
     }
 
-    public CardResponse toCardResponse(Card card) {
+    public CardResponse toCardResponse(CardEntity card) {
         if (card == null) return null;
         return CardResponse.builder()
                 .id(card.getId())
