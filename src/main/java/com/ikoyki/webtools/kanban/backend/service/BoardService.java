@@ -1,8 +1,8 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
 import com.ikoyki.webtools.kanban.backend.dto.request.ImportBoardRequest;
-import com.ikoyki.webtools.kanban.backend.entity.Board;
-import com.ikoyki.webtools.kanban.backend.entity.Card;
+import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.exception.InvalidImportException;
 import com.ikoyki.webtools.kanban.backend.repository.BoardRepository;
@@ -22,18 +22,18 @@ public class BoardService {
     private final CardRepository cardRepository;
 
     @Transactional(readOnly = true)
-    public Board getBoard(Long id) {
+    public BoardEntity getBoard(Long id) {
         return boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Board not found"));
     }
 
     @Transactional
-    public Board importBoard(Long boardId, ImportBoardRequest request) {
+    public BoardEntity importBoard(Long boardId, ImportBoardRequest request) {
         if (request.getColumns() == null) {
             throw new InvalidImportException("Columns list cannot be null");
         }
 
-        Board board = boardRepository.findById(boardId)
+        BoardEntity board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new RuntimeException("Board not found"));
 
         // Transactionally replace all
@@ -66,7 +66,7 @@ public class BoardService {
                         throw new InvalidImportException("Card title is required");
                     }
 
-                    Card card = Card.builder()
+                    CardEntity card = CardEntity.builder()
                             .column(column)
                             .title(cardImp.getTitle())
                             .description(cardImp.getDescription() != null ? cardImp.getDescription() : "")

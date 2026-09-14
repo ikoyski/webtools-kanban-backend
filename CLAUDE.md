@@ -20,7 +20,7 @@ Spring Boot 3 backend for a Kanban board application.
 
 ## Coding Guidelines
 - **Naming**: 
-    - Entities: `PascalCase` (e.g., `ColumnEntity`, `Card`)
+    - Entities: `PascalCase` (e.g., `BoardEntity`, `ColumnEntity`, `CardEntity`)
     - Repositories: `[Entity]Repository`
     - Services: `[Entity]Service`
     - Controllers: `[Entity]Controller`
