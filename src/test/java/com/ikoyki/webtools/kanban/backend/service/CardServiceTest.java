@@ -1,6 +1,6 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
-import com.ikoyki.webtools.kanban.backend.entity.Card;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
@@ -13,7 +13,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
+import javax.smartcardio.Card;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,17 +52,17 @@ class CardServiceTest {
         ColumnEntity colA = new ColumnEntity();
         colA.setId(columnAId);
 
-        Card card1 = Card.builder().id(card1Id).column(colA).position(0).build();
-        Card card2 = Card.builder().id(card2Id).column(colA).position(1).build();
-        Card card3 = Card.builder().id(card3Id).column(colA).position(2).build();
+        CardEntity card1 = CardEntity.builder().id(card1Id).column(colA).position(0).build();
+        CardEntity card2 = CardEntity.builder().id(card2Id).column(colA).position(1).build();
+        CardEntity card3 = CardEntity.builder().id(card3Id).column(colA).position(2).build();
 
-        List<Card> cards = new ArrayList<>(List.of(card1, card2, card3));
+        List<CardEntity> cards = new ArrayList<>(List.of(card1, card2, card3));
         when(cardRepository.findById(card1Id)).thenReturn(Optional.of(card1));
         when(cardRepository.findByColumnIdOrderByPositionAsc(columnAId)).thenReturn(cards);
         when(cardRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
         // Act: Move card1 (pos 0) to position 2
-        Card result = cardService.moveCard(card1Id, columnAId, 2);
+        CardEntity result = cardService.moveCard(card1Id, columnAId, 2);
 
         // Assert
         assertEquals(2, result.getPosition());
@@ -77,12 +80,12 @@ class CardServiceTest {
         ColumnEntity colB = new ColumnEntity();
         colB.setId(columnBId);
 
-        Card card1 = Card.builder().id(card1Id).column(colA).position(0).build();
-        Card card2 = Card.builder().id(card2Id).column(colA).position(1).build();
-        Card card3 = Card.builder().id(card3Id).column(colB).position(0).build();
+        CardEntity card1 = CardEntity.builder().id(card1Id).column(colA).position(0).build();
+        CardEntity card2 = CardEntity.builder().id(card2Id).column(colA).position(1).build();
+        CardEntity card3 = CardEntity.builder().id(card3Id).column(colB).position(0).build();
 
-        List<Card> cardsA = new ArrayList<>(List.of(card1, card2));
-        List<Card> cardsB = new ArrayList<>(List.of(card3));
+        List<CardEntity> cardsA = new ArrayList<>(List.of(card1, card2));
+        List<CardEntity> cardsB = new ArrayList<>(List.of(card3));
 
         when(cardRepository.findById(card1Id)).thenReturn(Optional.of(card1));
         when(cardRepository.findByColumnIdOrderByPositionAsc(columnAId)).thenReturn(cardsA);
@@ -91,7 +94,7 @@ class CardServiceTest {
         when(cardRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
         // Act: Move card1 from A to B at position 0
-        Card result = cardService.moveCard(card1Id, columnBId, 0);
+        CardEntity result = cardService.moveCard(card1Id, columnBId, 0);
 
         // Assert
         assertEquals(colB, result.getColumn());

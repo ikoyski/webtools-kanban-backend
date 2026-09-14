@@ -1,7 +1,7 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
 import com.ikoyki.webtools.kanban.backend.dto.request.ImportBoardRequest;
-import com.ikoyki.webtools.kanban.backend.entity.Board;
+import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
 import com.ikoyki.webtools.kanban.backend.exception.InvalidImportException;
 import com.ikoyki.webtools.kanban.backend.repository.BoardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
@@ -35,10 +35,10 @@ class BoardServiceTest {
 
     @Test
     void getBoard_Success() {
-        Board board = Board.builder().id(1L).name("Test Board").build();
+        BoardEntity board = BoardEntity.builder().id(1L).name("Test Board").build();
         when(boardRepository.findById(1L)).thenReturn(Optional.of(board));
 
-        Board result = boardService.getBoard(1L);
+        BoardEntity result = boardService.getBoard(1L);
 
         assertEquals("Test Board", result.getName());
     }
@@ -46,7 +46,7 @@ class BoardServiceTest {
     @Test
     void importBoard_ValidRequest_ReplacesData() {
         // Arrange
-        Board board = Board.builder().id(1L).name("Old Name").build();
+        BoardEntity board = BoardEntity.builder().id(1L).name("Old Name").build();
         when(boardRepository.findById(1L)).thenReturn(Optional.of(board));
 
         ImportBoardRequest.ColumnImport colImp = ImportBoardRequest.ColumnImport.builder()
@@ -59,7 +59,7 @@ class BoardServiceTest {
                 .build();
 
         // Act
-        Board result = boardService.importBoard(1L, request);
+        BoardEntity result = boardService.importBoard(1L, request);
 
         // Assert
         assertEquals("New Name", result.getName());
@@ -72,7 +72,7 @@ class BoardServiceTest {
     @Test
     void importBoard_InvalidRequest_ThrowsException() {
         // Arrange
-        Board board = Board.builder().id(1L).build();
+        BoardEntity board = BoardEntity.builder().id(1L).build();
         when(boardRepository.findById(1L)).thenReturn(Optional.of(board));
 
         ImportBoardRequest request = ImportBoardRequest.builder()

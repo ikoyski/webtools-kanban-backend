@@ -1,10 +1,10 @@
 package com.ikoyki.webtools.kanban.backend.controller;
 
 import com.ikoyki.webtools.kanban.backend.dto.request.*;
-import com.ikoyki.webtools.kanban.backend.dto.response.CardEntityResponse;
-import com.ikoyki.webtools.kanban.backend.entity.CardEntityEntity;
+import com.ikoyki.webtools.kanban.backend.dto.response.CardResponse;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.mapper.BoardMapper;
-import com.ikoyki.webtools.kanban.backend.service.CardEntityService;
+import com.ikoyki.webtools.kanban.backend.service.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,13 +14,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/v1/cards")
 @RequiredArgsConstructor
-public class CardEntityController {
-    private final CardEntityService cardService;
+public class CardController {
+    private final CardService cardService;
     private final BoardMapper boardMapper;
 
     @PostMapping
-    public ResponseEntity<CardEntityResponse> createCardEntity(@Valid @RequestBody CreateCardEntityRequest request) {
-        CardEntity card = cardService.createCardEntity(
+    public ResponseEntity<CardResponse> createCardEntity(@Valid @RequestBody CreateCardRequest request) {
+        CardEntity card = cardService.createCard(
                 request.getColumnId(),
                 request.getTitle(),
                 request.getDescription(),
@@ -28,12 +28,12 @@ public class CardEntityController {
                 request.getDueDate(),
                 request.getLabels()
         );
-        return ResponseEntity.ok(boardMapper.toCardEntityResponse(card));
+        return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<CardEntityResponse> updateCardEntity(@PathVariable UUID id, @RequestBody UpdateCardEntityRequest request) {
-        CardEntity card = cardService.updateCardEntity(
+    public ResponseEntity<CardResponse> updateCardEntity(@PathVariable UUID id, @RequestBody UpdateCardRequest request) {
+        CardEntity card = cardService.updateCard(
                 id,
                 request.getTitle(),
                 request.getDescription(),
@@ -41,18 +41,18 @@ public class CardEntityController {
                 request.getDueDate(),
                 request.getLabels()
         );
-        return ResponseEntity.ok(boardMapper.toCardEntityResponse(card));
+        return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCardEntity(@PathVariable UUID id) {
-        cardService.deleteCardEntity(id);
+    public ResponseEntity<Void> deleteCard(@PathVariable UUID id) {
+        cardService.deleteCard(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/move")
-    public ResponseEntity<CardEntityResponse> moveCardEntity(@PathVariable UUID id, @Valid @RequestBody MoveCardEntityRequest request) {
-        CardEntity card = cardService.moveCardEntity(id, request.getColumnId(), request.getPosition());
-        return ResponseEntity.ok(boardMapper.toCardEntityResponse(card));
+    public ResponseEntity<CardResponse> moveCardEntity(@PathVariable UUID id, @Valid @RequestBody MoveCardRequest request) {
+        CardEntity card = cardService.moveCard(id, request.getColumnId(), request.getPosition());
+        return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 }

@@ -4,7 +4,7 @@ import com.ikoyki.webtools.kanban.backend.dto.request.ReorderColumnsRequest;
 import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.exception.ColumnNotEmptyException;
-import com.ikoyki.webtools.kanban.backend.repository.CardEntityRepository;
+import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ColumnService {
     private final ColumnRepository columnRepository;
-    private final CardEntityRepository cardRepository;
+    private final CardRepository cardRepository;
 
     @Transactional
     public ColumnEntity createColumn(Long boardId, String title) {

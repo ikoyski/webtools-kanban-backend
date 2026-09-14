@@ -1,6 +1,6 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
-import com.ikoyki.webtools.kanban.backend.entity.Card;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.exception.ColumnNotEmptyException;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
@@ -14,7 +14,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
+import javax.smartcardio.Card;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,7 +78,7 @@ class ColumnServiceTest {
         ColumnEntity col = new ColumnEntity();
         col.setId(columnId);
         when(columnRepository.findById(columnId)).thenReturn(Optional.of(col));
-        when(cardRepository.findByColumnIdOrderByPositionAsc(columnId)).thenReturn(List.of(new Card()));
+        when(cardRepository.findByColumnIdOrderByPositionAsc(columnId)).thenReturn(List.of(new CardEntity()));
 
         // Act & Assert
         assertThrows(ColumnNotEmptyException.class, () -> columnService.deleteColumn(columnId, null));
@@ -90,11 +93,11 @@ class ColumnServiceTest {
         ColumnEntity destCol = new ColumnEntity();
         destCol.setId(destColumnId);
 
-        Card card1 = new Card();
+        CardEntity card1 = new CardEntity();
         card1.setPosition(0);
-        Card card2 = new Card();
+        CardEntity card2 = new CardEntity();
         card2.setPosition(1);
-        List<Card> cards = new ArrayList<>(List.of(card1, card2));
+        List<CardEntity> cards = new ArrayList<>(List.of(card1, card2));
 
         when(columnRepository.findById(columnId)).thenReturn(Optional.of(col));
         when(columnRepository.findById(destColumnId)).thenReturn(Optional.of(destCol));

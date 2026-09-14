@@ -1,8 +1,8 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
-import com.ikoyki.webtools.kanban.backend.entity.CardEntityEntity;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
-import com.ikoyki.webtools.kanban.backend.repository.CardEntityRepository;
+import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,12 +11,12 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class CardEntityService {
-    private final CardEntityRepository cardRepository;
+public class CardService {
+    private final CardRepository cardRepository;
     private final ColumnRepository columnRepository;
 
     @Transactional
-    public CardEntity createCardEntity(UUID columnId, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
+    public CardEntity createCard(UUID columnId, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
         ColumnEntity column = columnRepository.findById(columnId)
                 .orElseThrow(() -> new RuntimeException("Column not found"));
 
@@ -37,7 +37,7 @@ public class CardEntityService {
     }
 
     @Transactional
-    public CardEntity updateCardEntity(UUID id, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
+    public CardEntity updateCard(UUID id, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
         CardEntity card = cardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("CardEntity not found"));
 
@@ -51,17 +51,17 @@ public class CardEntityService {
     }
 
     @Transactional
-    public void deleteCardEntity(UUID id) {
+    public void deleteCard(UUID id) {
         CardEntity card = cardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("CardEntity not found"));
 
         UUID columnId = card.getColumn().getId();
         cardRepository.delete(card);
-        reindexCardEntitys(columnId);
+        reindexCards(columnId);
     }
 
     @Transactional
-    public CardEntity moveCardEntity(UUID cardId, UUID destColumnId, Integer destPosition) {
+    public CardEntity moveCard(UUID cardId, UUID destColumnId, Integer destPosition) {
         CardEntity card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new RuntimeException("CardEntity not found"));
 
@@ -97,7 +97,7 @@ public class CardEntityService {
         return cardRepository.save(card);
     }
 
-    private void reindexCardEntitys(UUID columnId) {
+    private void reindexCards(UUID columnId) {
         List<CardEntity> siblings = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
         reassignPositions(siblings);
     }
