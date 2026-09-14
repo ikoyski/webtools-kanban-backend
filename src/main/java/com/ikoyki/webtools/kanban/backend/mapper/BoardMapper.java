@@ -1,58 +1,101 @@
 package com.ikoyki.webtools.kanban.backend.mapper;
 
-import com.ikoyki.webtools.kanban.backend.dto.response.*;
-import com.ikoyki.webtools.kanban.backend.entity.*;
+import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
+import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
+import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
+import com.ikoyki.webtools.kanban.backend.dto.response.BoardResponse;
+import com.ikoyki.webtools.kanban.backend.dto.response.ColumnResponse;
+import com.ikoyki.webtools.kanban.backend.dto.response.CardResponse;
+
 import org.springframework.stereotype.Component;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 public class BoardMapper {
+
     public BoardResponse toResponse(BoardEntity board) {
-        if (board == null) return null;
+        if (board == null) {
+            return null;
+        }
+
+        // Initialize our target top-level maps
+        Map<UUID, ColumnResponse> columnMap = new HashMap<>();
+        Map<UUID, CardResponse> cardMap = new HashMap<>();
+
+        if (board.getColumns() != null) {
+            for (ColumnEntity column : board.getColumns()) {
+                if (column == null) continue;
+
+                // 1. Extract all Card IDs to satisfy the column's cardIds layout
+                List<UUID> cardIds = Optional.ofNullable(column.getCards())
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .map(CardEntity::getId)
+                        .collect(Collectors.toList());
+
+                // 2. Build the flat Column Response
+                ColumnResponse columnResponse = ColumnResponse.builder()
+                        .id(column.getId())
+                        .title(column.getTitle())
+                        .position(column.getPosition())
+                        .cardIds(cardIds)
+                        .build();
+
+                columnMap.put(column.getId(), columnResponse);
+
+                // 3. Map nested cards into the single root-level cards dictionary
+                if (column.getCards() != null) {
+                    for (CardEntity card : column.getCards()) {
+                        if (card == null) continue;
+
+                        CardResponse cardResponse = toCardResponse(card);
+                        cardMap.put(card.getId(), cardResponse);
+                    }
+                }
+            }
+        }
+
+        // 4. Construct and return final BoardResponse matching frontend state properties
         return BoardResponse.builder()
                 .id(board.getId())
                 .name(board.getName())
-                .columns(mapColumns(board.getColumns()))
+                .columns(columnMap)
+                .cards(cardMap)
                 .build();
     }
 
-    private List<ColumnResponse> mapColumns(List<ColumnEntity> columns) {
-        if (columns == null) return null;
-        return columns.stream()
-                .map(this::toColumnResponse)
-                .collect(Collectors.toList());
-    }
-
     public ColumnResponse toColumnResponse(ColumnEntity column) {
-        if (column == null) return null;
+        if (column == null) {
+            return null;
+        }
+
+        // Pulling all card IDs to satisfy the updated frontend state normalization
+        List<UUID> cardIds = Optional.ofNullable(column.getCards())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(Objects::nonNull)
+                .map(CardEntity::getId)
+                .collect(Collectors.toList());
+
         return ColumnResponse.builder()
                 .id(column.getId())
                 .title(column.getTitle())
                 .position(column.getPosition())
-                .cards(mapCards(column.getCards()))
+                .cardIds(cardIds)
                 .build();
-    }
-
-    private List<CardResponse> mapCards(List<CardEntity> cards) {
-        if (cards == null) return null;
-        return cards.stream()
-                .map(this::toCardResponse)
-                .collect(Collectors.toList());
     }
 
     public CardResponse toCardResponse(CardEntity card) {
         if (card == null) return null;
+
         return CardResponse.builder()
                 .id(card.getId())
                 .title(card.getTitle())
                 .description(card.getDescription())
-                .priority(card.getPriority())
-                .dueDate(card.getDueDate())
-                .labels(card.getLabels())
                 .position(card.getPosition())
-                .createdAt(card.getCreatedAt())
-                .updatedAt(card.getUpdatedAt())
+                .labels(card.getLabels())
                 .build();
     }
 }

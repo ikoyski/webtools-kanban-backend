@@ -1,7 +1,8 @@
 package com.ikoyki.webtools.kanban.backend.dto.response;
 
 import lombok.*;
-import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -10,5 +11,6 @@ import java.util.List;
 public class BoardResponse {
     private Long id;
     private String name;
-    private List<ColumnResponse> columns;
+    private Map<UUID, ColumnResponse> columns;
+    private Map<UUID, CardResponse> cards;
 }

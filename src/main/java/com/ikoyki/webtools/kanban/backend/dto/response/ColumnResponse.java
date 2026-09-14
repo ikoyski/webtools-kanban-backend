@@ -12,5 +12,5 @@ public class ColumnResponse {
     private UUID id;
     private String title;
     private Integer position;
-    private List<CardResponse> cards;
+    private List<UUID> cardIds;
 }
