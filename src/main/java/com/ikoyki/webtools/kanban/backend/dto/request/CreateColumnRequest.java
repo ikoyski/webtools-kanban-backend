@@ -1,6 +1,7 @@
 package com.ikoyki.webtools.kanban.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.util.UUID;
 
@@ -10,7 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CreateColumnRequest {
 
-    @NotBlank
+    @NotNull
     private UUID boardId;
 
     @NotBlank
