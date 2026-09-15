@@ -3,9 +3,11 @@ package com.ikoyki.webtools.kanban.backend.service;
 import com.ikoyki.webtools.kanban.backend.dto.request.ReorderColumnsRequest;
 import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
+import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
 import com.ikoyki.webtools.kanban.backend.exception.ColumnNotEmptyException;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
+import com.ikoyki.webtools.kanban.backend.repository.BoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +16,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class ColumnService {
+    private final BoardRepository boardRepository;
     private final ColumnRepository columnRepository;
     private final CardRepository cardRepository;
 
@@ -22,10 +25,8 @@ public class ColumnService {
         List<ColumnEntity> existing = columnRepository.findByBoardIdOrderByPositionAsc(boardId);
         int position = existing.size();
 
-        // We need a BoardEntity object for the relation
-        // For v1 we assume board 1 exists
-        com.ikoyki.webtools.kanban.backend.entity.BoardEntity board = new com.ikoyki.webtools.kanban.backend.entity.BoardEntity();
-        board.setId(boardId);
+        BoardEntity board = boardRepository.findById(boardId)
+            .orElseThrow(() -> new RuntimeException("Board not found"));
 
         ColumnEntity column = ColumnEntity.builder()
                 .board(board)

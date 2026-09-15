@@ -1,10 +1,12 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
+import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.exception.ColumnNotEmptyException;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
+import com.ikoyki.webtools.kanban.backend.repository.BoardRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,14 +16,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
-import javax.smartcardio.Card;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ColumnServiceTest {
+
+    @Mock
+    private BoardRepository boardRepository;
 
     @Mock
     private ColumnRepository columnRepository;
@@ -32,11 +35,13 @@ class ColumnServiceTest {
     @InjectMocks
     private ColumnService columnService;
 
+    private UUID boardId;
     private UUID columnId;
     private UUID destColumnId;
 
     @BeforeEach
     void setUp() {
+        boardId = UUID.randomUUID();
         columnId = UUID.randomUUID();
         destColumnId = UUID.randomUUID();
     }
@@ -44,8 +49,11 @@ class ColumnServiceTest {
     @Test
     void createColumn_SetsCorrectPosition() {
         // Arrange
-        UUID boardId = UUID.randomUUID();
+        BoardEntity boardA = new BoardEntity();
+        boardA.setId(boardId);
+
         List<ColumnEntity> existing = List.of(new ColumnEntity(), new ColumnEntity());
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(boardA));
         when(columnRepository.findByBoardIdOrderByPositionAsc(boardId)).thenReturn(existing);
         when(columnRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
