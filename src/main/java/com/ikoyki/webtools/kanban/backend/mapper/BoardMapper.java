@@ -95,8 +95,12 @@ public class BoardMapper {
                 .id(card.getId())
                 .title(card.getTitle())
                 .description(card.getDescription())
-                .position(card.getPosition())
+                .priority(card.getPriority())
+                .dueDate(card.getDueDate())
                 .labels(card.getLabels())
+                .position(card.getPosition())
+                .createdAt(card.getCreatedAt())
+                .updatedAt(card.getUpdatedAt())
                 .build();
     }
 }
