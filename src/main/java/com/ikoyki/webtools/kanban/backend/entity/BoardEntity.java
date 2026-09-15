@@ -29,5 +29,6 @@ public class BoardEntity {
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
     private List<ColumnEntity> columns;
 }

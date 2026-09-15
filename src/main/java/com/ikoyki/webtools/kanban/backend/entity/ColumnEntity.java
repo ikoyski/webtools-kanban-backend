@@ -36,5 +36,6 @@ public class ColumnEntity {
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @OneToMany(mappedBy = "column", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
     private List<CardEntity> cards;
 }
