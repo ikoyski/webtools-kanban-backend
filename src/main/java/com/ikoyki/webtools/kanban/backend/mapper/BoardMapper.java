@@ -20,8 +20,8 @@ public class BoardMapper {
         }
 
         // Initialize our target top-level maps
-        Map<UUID, ColumnResponse> columnMap = new HashMap<>();
-        Map<UUID, CardResponse> cardMap = new HashMap<>();
+        Map<UUID, ColumnResponse> columnMap = new LinkedHashMap <>();
+        Map<UUID, CardResponse> cardMap = new LinkedHashMap <>();
 
         if (board.getColumns() != null) {
             for (ColumnEntity column : board.getColumns()) {

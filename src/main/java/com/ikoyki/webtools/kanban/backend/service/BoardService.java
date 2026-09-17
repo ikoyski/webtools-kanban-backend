@@ -46,8 +46,8 @@ public class BoardService {
         }
 
         List<ColumnEntity> createdColumns = new ArrayList<>();
-        for (int i = 0; i < request.getColumns().size(); i++) {
-            ImportBoardRequest.ColumnImport colImp = request.getColumns().get(i);
+        request.getColumns().forEach((key, colImp) -> {
+
             if (colImp.getTitle() == null || colImp.getTitle().isBlank()) {
                 throw new InvalidImportException("Column title is required");
             }
@@ -55,30 +55,31 @@ public class BoardService {
             ColumnEntity column = ColumnEntity.builder()
                     .board(board)
                     .title(colImp.getTitle())
-                    .position(i)
+                    .position(colImp.getPosition())
                     .build();
             createdColumns.add(columnRepository.save(column));
 
-            if (colImp.getCards() != null) {
-                for (int j = 0; j < colImp.getCards().size(); j++) {
-                    ImportBoardRequest.CardImport cardImp = colImp.getCards().get(j);
-                    if (cardImp.getTitle() == null || cardImp.getTitle().isBlank()) {
-                        throw new InvalidImportException("Card title is required");
+            if (colImp.getCardIds() != null) {
+                for (int j = 0; j < colImp.getCardIds().size(); j++) {
+                    ImportBoardRequest.CardImport cardImp = request.getCards().get(colImp.getCardIds().get(j));
+                    if (cardImp != null) {
+                        if (cardImp.getTitle() == null || cardImp.getTitle().isBlank()) {
+                            throw new InvalidImportException("Card title is required");
+                        }
+                        CardEntity card = CardEntity.builder()
+                                .column(column)
+                                .title(cardImp.getTitle())
+                                .description(cardImp.getDescription() != null ? cardImp.getDescription() : "")
+                                .priority(cardImp.getPriority() != null ? cardImp.getPriority() : "Medium")
+                                .dueDate(cardImp.getDueDate() != null ? LocalDate.parse(cardImp.getDueDate()) : null)
+                                .labels(cardImp.getLabels() != null ? cardImp.getLabels() : Collections.emptyList())
+                                .position(j)
+                                .build();
+                        cardRepository.save(card);
                     }
-
-                    CardEntity card = CardEntity.builder()
-                            .column(column)
-                            .title(cardImp.getTitle())
-                            .description(cardImp.getDescription() != null ? cardImp.getDescription() : "")
-                            .priority(cardImp.getPriority() != null ? cardImp.getPriority() : "Medium")
-                            .dueDate(cardImp.getDueDate() != null ? LocalDate.parse(cardImp.getDueDate()) : null)
-                            .labels(cardImp.getLabels() != null ? cardImp.getLabels() : Collections.emptyList())
-                            .position(j)
-                            .build();
-                    cardRepository.save(card);
                 }
             }
-        }
+        });
 
         return board;
     }
