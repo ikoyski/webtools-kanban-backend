@@ -9,19 +9,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReorderColumnsRequest {
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ColumnPosition {
         private UUID id;
         private Integer position;
-
-        public ColumnPosition() {}
-        public ColumnPosition(UUID id, Integer position) {
-            this.id = id;
-            this.position = position;
-        }
-        public UUID getId() { return id; }
-        public void setId(UUID id) { this.id = id; }
-        public Integer getPosition() { return position; }
-        public void setPosition(Integer position) { this.position = position; }
     }
 
     private List<ColumnPosition> columns;

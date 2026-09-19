@@ -26,7 +26,7 @@ public class ColumnService {
         int position = existing.size();
 
         BoardEntity board = boardRepository.findById(boardId)
-            .orElseThrow(() -> new RuntimeException("Board not found"));
+                .orElseThrow(() -> new RuntimeException("Board not found"));
 
         ColumnEntity column = ColumnEntity.builder()
                 .board(board)

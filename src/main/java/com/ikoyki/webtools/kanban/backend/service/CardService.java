@@ -16,7 +16,8 @@ public class CardService {
     private final ColumnRepository columnRepository;
 
     @Transactional
-    public CardEntity createCard(UUID columnId, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
+    public CardEntity createCard(UUID columnId, String title, String description, String priority,
+            java.time.LocalDate dueDate, List<String> labels) {
         ColumnEntity column = columnRepository.findById(columnId)
                 .orElseThrow(() -> new RuntimeException("Column not found"));
 
@@ -37,15 +38,21 @@ public class CardService {
     }
 
     @Transactional
-    public CardEntity updateCard(UUID id, String title, String description, String priority, java.time.LocalDate dueDate, List<String> labels) {
+    public CardEntity updateCard(UUID id, String title, String description, String priority,
+            java.time.LocalDate dueDate, List<String> labels) {
         CardEntity card = cardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("CardEntity not found"));
 
-        if (title != null) card.setTitle(title);
-        if (description != null) card.setDescription(description);
-        if (priority != null) card.setPriority(priority);
-        if (dueDate != null) card.setDueDate(dueDate);
-        if (labels != null) card.setLabels(labels);
+        if (title != null)
+            card.setTitle(title);
+        if (description != null)
+            card.setDescription(description);
+        if (priority != null)
+            card.setPriority(priority);
+        if (dueDate != null)
+            card.setDueDate(dueDate);
+        if (labels != null)
+            card.setLabels(labels);
 
         return cardRepository.save(card);
     }

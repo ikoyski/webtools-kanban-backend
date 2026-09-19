@@ -19,19 +19,23 @@ public class ColumnController {
     private final BoardMapper boardMapper;
 
     @PostMapping
-    public ResponseEntity<ColumnResponse> createColumn(@Valid @RequestBody CreateColumnRequest request) {
+    public ResponseEntity<ColumnResponse> createColumn(/*@RequestHeader("X-User-Email") String userEmail,
+            @RequestHeader("X-User-Id") String userId,*/ @Valid @RequestBody CreateColumnRequest request) {
         ColumnEntity column = columnService.createColumn(request.getBoardId(), request.getTitle());
         return ResponseEntity.ok(boardMapper.toColumnResponse(column));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ColumnResponse> renameColumn(@PathVariable UUID id, @Valid @RequestBody UpdateColumnRequest request) {
+    public ResponseEntity<ColumnResponse> renameColumn(/*@RequestHeader("X-User-Email") String userEmail,
+            @RequestHeader("X-User-Id") String userId,*/ @PathVariable UUID id,
+            @Valid @RequestBody UpdateColumnRequest request) {
         ColumnEntity column = columnService.renameColumn(id, request.getTitle());
         return ResponseEntity.ok(boardMapper.toColumnResponse(column));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteColumn(
+            /*@RequestHeader("X-User-Email") String userEmail, @RequestHeader("X-User-Id") String userId,*/
             @PathVariable UUID id,
             @RequestParam(required = false) UUID transferTo) {
         columnService.deleteColumn(id, transferTo);
@@ -39,7 +43,8 @@ public class ColumnController {
     }
 
     @PatchMapping("/reorder")
-    public ResponseEntity<Void> reorderColumns(@RequestBody ReorderColumnsRequest request) {
+    public ResponseEntity<Void> reorderColumns(/*@RequestHeader("X-User-Email") String userEmail,
+            @RequestHeader("X-User-Id") String userId,*/ @RequestBody ReorderColumnsRequest request) {
         columnService.reorderColumns(request.getColumns());
         return ResponseEntity.ok().build();
     }

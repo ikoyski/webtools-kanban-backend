@@ -10,7 +10,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateColumnRequest {
-
     @NotNull
     private UUID boardId;
 

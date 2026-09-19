@@ -12,10 +12,8 @@ import java.util.UUID;
 public class ImportBoardRequest {
     private UUID id;
     private String name;
-
     private Map<UUID, ColumnImport> columns;
     private Map<UUID, CardImport> cards;
-
     private Map<String, Object> settings;
 
     @Data

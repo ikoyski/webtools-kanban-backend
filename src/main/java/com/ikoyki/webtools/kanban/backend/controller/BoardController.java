@@ -17,23 +17,26 @@ public class BoardController {
     private final BoardService boardService;
     private final BoardMapper boardMapper;
 
-    //for now we only have one board, this will change later
+    // for now we only have one board, this will change later
     private final UUID FIRST_EVER_BOARD_ID = UUID.fromString("e36425fc-6c46-43f7-b263-809494502937");
 
     @GetMapping
-    public ResponseEntity<BoardResponse> getBoard() {
+    public ResponseEntity<BoardResponse> getBoard(/*@RequestHeader("X-User-Email") String userEmail,
+            @RequestHeader("X-User-Id") String userId*/) {
         BoardEntity board = boardService.getBoard(FIRST_EVER_BOARD_ID);
         return ResponseEntity.ok(boardMapper.toResponse(board));
     }
 
     @GetMapping("/export")
-    public ResponseEntity<BoardResponse> exportBoard() {
+    public ResponseEntity<BoardResponse> exportBoard(/*@RequestHeader("X-User-Email") String userEmail,
+            @RequestHeader("X-User-Id") String userId*/) {
         BoardEntity board = boardService.getBoard(FIRST_EVER_BOARD_ID);
         return ResponseEntity.ok(boardMapper.toResponse(board));
     }
 
     @PutMapping("/import")
-    public ResponseEntity<BoardResponse> importBoard(@RequestBody ImportBoardRequest request) {
+    public ResponseEntity<BoardResponse> importBoard(/*@RequestHeader("X-User-Email") String userEmail,
+            @RequestHeader("X-User-Id") String userId,*/ @RequestBody ImportBoardRequest request) {
         BoardEntity board = boardService.importBoard(FIRST_EVER_BOARD_ID, request);
         return ResponseEntity.ok(boardMapper.toResponse(board));
     }

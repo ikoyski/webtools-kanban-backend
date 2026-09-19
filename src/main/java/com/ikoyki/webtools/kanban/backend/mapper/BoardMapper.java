@@ -20,12 +20,13 @@ public class BoardMapper {
         }
 
         // Initialize our target top-level maps
-        Map<UUID, ColumnResponse> columnMap = new LinkedHashMap <>();
-        Map<UUID, CardResponse> cardMap = new LinkedHashMap <>();
+        Map<UUID, ColumnResponse> columnMap = new LinkedHashMap<>();
+        Map<UUID, CardResponse> cardMap = new LinkedHashMap<>();
 
         if (board.getColumns() != null) {
             for (ColumnEntity column : board.getColumns()) {
-                if (column == null) continue;
+                if (column == null)
+                    continue;
 
                 // 1. Extract all Card IDs to satisfy the column's cardIds layout
                 List<UUID> cardIds = Optional.ofNullable(column.getCards())
@@ -48,7 +49,8 @@ public class BoardMapper {
                 // 3. Map nested cards into the single root-level cards dictionary
                 if (column.getCards() != null) {
                     for (CardEntity card : column.getCards()) {
-                        if (card == null) continue;
+                        if (card == null)
+                            continue;
 
                         CardResponse cardResponse = toCardResponse(card);
                         cardMap.put(card.getId(), cardResponse);
@@ -57,13 +59,14 @@ public class BoardMapper {
             }
         }
 
-        // 4. Construct and return final BoardResponse matching frontend state properties
+        // 4. Construct and return final BoardResponse matching frontend state
+        // properties
         return BoardResponse.builder()
                 .id(board.getId())
                 .name(board.getName())
                 .columns(columnMap)
                 .cards(cardMap)
-                .settings(Map.of("theme", "light")) 
+                .settings(Map.of("theme", "light"))
                 .build();
     }
 
@@ -89,7 +92,8 @@ public class BoardMapper {
     }
 
     public CardResponse toCardResponse(CardEntity card) {
-        if (card == null) return null;
+        if (card == null)
+            return null;
 
         return CardResponse.builder()
                 .id(card.getId())
