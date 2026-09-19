@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 
 @Entity
-@Table(name = "user")
+@Table(name = "user_provider")
 @Getter
 @Setter
 @NoArgsConstructor
