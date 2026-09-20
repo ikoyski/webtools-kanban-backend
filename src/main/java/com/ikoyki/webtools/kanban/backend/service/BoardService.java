@@ -1,18 +1,17 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
 import com.ikoyki.webtools.kanban.backend.dto.request.ImportBoardRequest;
-import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
-import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
-import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
-import com.ikoyki.webtools.kanban.backend.exception.InvalidImportException;
-import com.ikoyki.webtools.kanban.backend.repository.BoardRepository;
-import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
-import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
+import com.ikoyki.webtools.kanban.backend.dto.response.BoardListResponse;
+import com.ikoyki.webtools.kanban.backend.entity.*;
+import com.ikoyki.webtools.kanban.backend.exception.*;
+import com.ikoyki.webtools.kanban.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,23 +19,80 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final ColumnRepository columnRepository;
     private final CardRepository cardRepository;
+    private final BoardMemberRepository boardMemberRepository;
+    private final UserRepository userRepository;
+    private final BoardAccessService boardAccessService;
 
     @Transactional(readOnly = true)
-    public BoardEntity getBoard(UUID id) {
-        return boardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Board not found"));
+    public List<BoardListResponse> listBoardsForUser(UUID userId) {
+        return boardMemberRepository.findAllByUserId(userId).stream()
+                .map(member -> {
+                    BoardEntity board = member.getBoard();
+                    return BoardListResponse.builder()
+                            .id(board.getId())
+                            .name(board.getName())
+                            .role(member.getRole())
+                            .updatedAt(board.getCreatedAt()) // Using createdAt as surrogate for updatedAt in v1
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public BoardEntity importBoard(UUID boardId, ImportBoardRequest request) {
+    public BoardEntity createBoard(String name, UUID ownerId) {
+        BoardEntity board = BoardEntity.builder()
+                .name(name)
+                .createdBy(ownerId)
+                .build();
+        BoardEntity savedBoard = boardRepository.save(board);
+
+        BoardMemberEntity member = BoardMemberEntity.builder()
+                .id(UUID.randomUUID())
+                .board(savedBoard)
+                .user(userRepository.findById(ownerId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found")))
+                .role(BoardRole.OWNER)
+                .createdAt(java.time.OffsetDateTime.now())
+                .build();
+        boardMemberRepository.save(member);
+
+        return savedBoard;
+    }
+
+    @Transactional(readOnly = true)
+    public BoardEntity getBoard(UUID id, UUID userId) {
+        boardAccessService.requireMembership(id, userId);
+        return boardRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
+    }
+
+    @Transactional
+    public BoardEntity renameBoard(UUID id, String newName, UUID userId) {
+        boardAccessService.requireAtLeast(id, userId, BoardRole.EDITOR);
+        BoardEntity board = boardRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
+        board.setName(newName);
+        return boardRepository.save(board);
+    }
+
+    @Transactional
+    public void deleteBoard(UUID id, UUID userId) {
+        boardAccessService.requireAtLeast(id, userId, BoardRole.OWNER);
+        BoardEntity board = boardRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
+        boardRepository.delete(board);
+    }
+
+    @Transactional
+    public BoardEntity importBoard(UUID boardId, ImportBoardRequest request, UUID userId) {
+        boardAccessService.requireAtLeast(boardId, userId, BoardRole.EDITOR);
         if (request.getColumns() == null) {
             throw new InvalidImportException("Columns list cannot be null");
         }
 
         BoardEntity board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new RuntimeException("Board not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
 
-        // Transactionally replace all
         cardRepository.deleteByColumn_Board_Id(boardId);
         columnRepository.deleteByBoardId(boardId);
 
@@ -47,7 +103,6 @@ public class BoardService {
 
         List<ColumnEntity> createdColumns = new ArrayList<>();
         request.getColumns().forEach((key, colImp) -> {
-
             if (colImp.getTitle() == null || colImp.getTitle().isBlank()) {
                 throw new InvalidImportException("Column title is required");
             }

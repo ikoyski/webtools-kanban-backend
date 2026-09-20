@@ -27,7 +27,8 @@ $$ LANGUAGE plpgsql VOLATILE;
 
 CREATE TABLE board (
     id          UUID PRIMARY KEY DEFAULT uuidv7(),
-    name        TEXT NOT NULL DEFAULT 'My Board',
+    name        TEXT NOT NULL,
+    created_by  UUID,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

@@ -9,8 +9,9 @@ Spring Boot 3 backend for a Kanban board application.
 - **Observability**: Micrometer Tracing (Brave, Zipkin)
 - **Quality Analysis**: Monitored via SonarCloud for bugs, vulnerabilities, and code smells.
 - **Schema Management**: Flyway
-- **API**: RESTful, versioned at `/api/v1`
+- **API**: RESTful, versioned at `/api/v1` (Supports multi-board RBAC: OWNER, EDITOR, VIEWER)
 - **Package**: `com.ikoyki.webtools.kanban.backend`
+
 
 ## Build & Run Commands
 - **Build**: `mvn clean compile`

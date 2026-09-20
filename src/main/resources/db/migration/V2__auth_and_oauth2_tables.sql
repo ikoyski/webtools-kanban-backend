@@ -1,4 +1,4 @@
--- V2__auth_and_oauth2_tables.sql
+-- V2__users_and_boards_membership.sql
 
 -- 1. Main User Profile Table
 CREATE TABLE user_entity (
@@ -10,16 +10,31 @@ CREATE TABLE user_entity (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 2. Authentication Provider Table (Allows multiple login types per user)
+-- 2. Authentication Provider Table
 CREATE TABLE user_provider (
     id              UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id         UUID NOT NULL REFERENCES user_entity(id) ON DELETE CASCADE,
-    provider_type   VARCHAR(50) NOT NULL,   -- 'LOCAL', 'GOOGLE', 'GITHUB', etc.
-    provider_id     VARCHAR(255),           -- The 'sub' ID from Google, or NULL for local
-    password_hash   VARCHAR(255),           -- Extracted password hash for 'LOCAL', NULL for OAuth
+    provider_type   VARCHAR(50) NOT NULL,
+    provider_id     VARCHAR(255),
+    password_hash   VARCHAR(255),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT      unique_user_provider UNIQUE (user_id, provider_type),
     CONSTRAINT      unique_oauth_identity UNIQUE (provider_type, provider_id)
 );
 
 CREATE INDEX idx_user_provider_search ON user_provider(provider_type, provider_id);
+
+-- 3. Board Membership
+CREATE TYPE board_role AS ENUM ('OWNER', 'EDITOR', 'VIEWER');
+
+CREATE TABLE board_member (
+    id          UUID PRIMARY KEY DEFAULT uuidv7(),
+    board_id    UUID NOT NULL REFERENCES board(id) ON DELETE CASCADE,
+    user_id     UUID NOT NULL REFERENCES user_entity(id) ON DELETE CASCADE,
+    role        board_role NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (board_id, user_id)
+);
+
+CREATE INDEX idx_board_member_user ON board_member(user_id);
+CREATE INDEX idx_board_member_board ON board_member(board_id);

@@ -1,11 +1,9 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
-import com.ikoyki.webtools.kanban.backend.dto.request.ImportBoardRequest;
-import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
-import com.ikoyki.webtools.kanban.backend.exception.InvalidImportException;
-import com.ikoyki.webtools.kanban.backend.repository.BoardRepository;
-import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
-import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
+import com.ikoyki.webtools.kanban.backend.entity.*;
+import com.ikoyki.webtools.kanban.backend.exception.*;
+import com.ikoyki.webtools.kanban.backend.repository.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,96 +13,61 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BoardServiceTest {
 
-    @Mock
-    private BoardRepository boardRepository;
-
-    @Mock
-    private ColumnRepository columnRepository;
-
-    @Mock
-    private CardRepository cardRepository;
+    @Mock private BoardRepository boardRepository;
+    @Mock private ColumnRepository columnRepository;
+    @Mock private CardRepository cardRepository;
+    @Mock private BoardMemberRepository boardMemberRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private BoardAccessService boardAccessService;
 
     @InjectMocks
     private BoardService boardService;
 
+    private UUID boardId;
+    private UUID userId;
+
+    @BeforeEach
+    void setUp() {
+        boardId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+    }
+
     @Test
-    void getBoard_Success() {
-        UUID boardId = UUID.randomUUID();
-        BoardEntity board = BoardEntity.builder().id(boardId).name("Test Board").build();
-        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+    void createBoard_Success() {
+        UserEntity user = new UserEntity();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(boardRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
-        BoardEntity result = boardService.getBoard(boardId);
+        BoardEntity result = boardService.createBoard("Test Board", userId);
 
+        assertNotNull(result);
         assertEquals("Test Board", result.getName());
+        verify(boardMemberRepository).save(any());
     }
 
     @Test
-    void importBoard_ValidRequest_ReplacesData() {
-        // Arrange
-        UUID boardId = UUID.randomUUID();
-        BoardEntity board = BoardEntity.builder().id(UUID.randomUUID()).name("Old Name").build();
-        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+    void getBoard_Forbidden_ThrowsException() {
+        doThrow(new ForbiddenBoardAccessException("Forbidden")).when(boardAccessService).requireMembership(boardId, userId);
 
-        ImportBoardRequest.CardImport cImport = ImportBoardRequest.CardImport.builder()
-                .id(UUID.randomUUID())
-                .title("New Card")
-                .build();
-        
-        Map<UUID, ImportBoardRequest.CardImport> cMap = new HashMap<>();
-        cMap.put(cImport.getId(), cImport);
-
-        ImportBoardRequest.ColumnImport colImp = ImportBoardRequest.ColumnImport.builder()
-                .id(UUID.randomUUID())
-                .title("New Col")
-                .cardIds(List.of(cImport.getId()))
-                .build();
-
-        Map<UUID, ImportBoardRequest.ColumnImport> colsMap = new HashMap<>();
-        colsMap.put(colImp.getId(), colImp);
-
-        ImportBoardRequest request = ImportBoardRequest.builder()
-                .id(boardId)
-                .name("New Name")
-                .columns(colsMap)
-                .cards(cMap)
-                .build();
-
-        // Act
-        BoardEntity result = boardService.importBoard(boardId, request);
-
-        // Assert
-        assertEquals("New Name", result.getName());
-        verify(cardRepository).deleteByColumn_Board_Id(boardId);
-        verify(columnRepository).deleteByBoardId(boardId);
-        verify(columnRepository).save(any());
-        verify(cardRepository).save(any());
+        assertThrows(ForbiddenBoardAccessException.class, () -> boardService.getBoard(boardId, userId));
     }
 
-    //@Test
-    void importBoard_InvalidRequest_ThrowsException() {
-        // Arrange
-        UUID boardId = UUID.randomUUID();
-        BoardEntity board = BoardEntity.builder().id(UUID.randomUUID()).build();
-        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+    @Test
+    void renameBoard_Forbidden_ThrowsException() {
+        doThrow(new ForbiddenBoardAccessException("Forbidden")).when(boardAccessService).requireAtLeast(boardId, userId, BoardRole.EDITOR);
 
-        ImportBoardRequest.ColumnImport colImp = ImportBoardRequest.ColumnImport.builder()
-                .title("") // Invalid title
-                .build();
+        assertThrows(ForbiddenBoardAccessException.class, () -> boardService.renameBoard(boardId, "New Name", userId));
+    }
 
-        Map<UUID, ImportBoardRequest.ColumnImport> colsMap = new HashMap<>();
-        colsMap.put(colImp.getId(), colImp);
+    @Test
+    void deleteBoard_Forbidden_ThrowsException() {
+        doThrow(new ForbiddenBoardAccessException("Forbidden")).when(boardAccessService).requireAtLeast(boardId, userId, BoardRole.OWNER);
 
-        ImportBoardRequest request = ImportBoardRequest.builder()
-                .columns(colsMap) 
-                .build();
-
-        // Act & Assert
-        assertThrows(InvalidImportException.class, () -> boardService.importBoard(boardId, request));
+        assertThrows(ForbiddenBoardAccessException.class, () -> boardService.deleteBoard(boardId, userId));
     }
 }

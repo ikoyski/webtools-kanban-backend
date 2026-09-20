@@ -1,8 +1,9 @@
 # WebTools Kanban Backend
 
-A Spring Boot 3 backend for the WebTools Kanban board application. This service provides a REST API for managing a single Kanban board with columns and cards, featuring robust positional ordering and transactional board imports.
+A Spring Boot 3 backend for the WebTools Kanban board application. This service provides a REST API for managing multiple Kanban boards with user membership and role-based access control (RBAC), featuring robust positional ordering and transactional board imports.
 
 ## 🚀 Tech Stack
+
 
 - **Language**: Java 21
 - **Framework**: Spring Boot 3.4.2
@@ -42,12 +43,19 @@ Once the application is running, you can access the interactive API documentatio
 `http://localhost:8080/api/v1`
 
 ### Key Endpoints
-- `GET /board`: Fetch full board state.
+- `GET /boards`: List boards the current user belongs to.
+- `POST /boards`: Create a new board.
+- `GET /boards/{boardId}`: Fetch full state of a specific board.
+- `GET /boards/{boardId}/members`: List members and roles of a board.
+- `POST /boards/{boardId}/members`: Add a member to a board.
+- `PATCH /boards/{boardId}/members/{userId}`: Update a member's role.
+- `DELETE /boards/{boardId}/members/{userId}`: Remove a member from a board.
 - `POST /columns`: Create a new column.
 - `DELETE /columns/{id}?transferTo={id}`: Delete a column and optionally transfer cards.
 - `POST /cards`: Create a new card.
 - `PATCH /cards/{id}/move`: Move a card within or across columns.
-- `PUT /board/import`: Transactionally replace entire board state.
+- `PUT /boards/{boardId}/import`: Transactionally replace entire board state.
+
 
 ## 🛡️ Quality Assurance
 
@@ -55,9 +63,12 @@ The project is automatically analyzed for bugs, vulnerabilities, and code smells
 
 ## 📉 Database Schema
 
+- `user_entity`: User profiles and identities.
 - `board`: Top-level board metadata.
+- `board_member`: User-to-board membership with roles (OWNER, EDITOR, VIEWER).
 - `column_entity`: Columns belonging to a board, ordered by `position`.
 - `card`: Cards belonging to a column, ordered by `position`. Labels are stored as `JSONB`.
+
 
 ## 🩺 Health Check
 Check the service status:

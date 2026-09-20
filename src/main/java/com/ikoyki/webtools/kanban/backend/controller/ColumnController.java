@@ -19,33 +19,38 @@ public class ColumnController {
     private final BoardMapper boardMapper;
 
     @PostMapping
-    public ResponseEntity<ColumnResponse> createColumn(/*@RequestHeader("X-User-Email") String userEmail,
-            @RequestHeader("X-User-Id") String userId,*/ @Valid @RequestBody CreateColumnRequest request) {
-        ColumnEntity column = columnService.createColumn(request.getBoardId(), request.getTitle());
+    public ResponseEntity<ColumnResponse> createColumn(@AuthUser UUID currentUserId, @Valid @RequestBody CreateColumnRequest request) {
+        ColumnEntity column = columnService.createColumn(request.getBoardId(), request.getTitle(), currentUserId);
         return ResponseEntity.ok(boardMapper.toColumnResponse(column));
     }
 
+
+
     @PatchMapping("/{id}")
-    public ResponseEntity<ColumnResponse> renameColumn(/*@RequestHeader("X-User-Email") String userEmail,
-            @RequestHeader("X-User-Id") String userId,*/ @PathVariable UUID id,
+    public ResponseEntity<ColumnResponse> renameColumn(@AuthUser UUID currentUserId, @PathVariable UUID id,
             @Valid @RequestBody UpdateColumnRequest request) {
-        ColumnEntity column = columnService.renameColumn(id, request.getTitle());
+        ColumnEntity column = columnService.renameColumn(id, request.getTitle(), currentUserId);
         return ResponseEntity.ok(boardMapper.toColumnResponse(column));
     }
+
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteColumn(
-            /*@RequestHeader("X-User-Email") String userEmail, @RequestHeader("X-User-Id") String userId,*/
+            @AuthUser UUID currentUserId,
             @PathVariable UUID id,
             @RequestParam(required = false) UUID transferTo) {
-        columnService.deleteColumn(id, transferTo);
+        columnService.deleteColumn(id, transferTo, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
+
+
     @PatchMapping("/reorder")
-    public ResponseEntity<Void> reorderColumns(/*@RequestHeader("X-User-Email") String userEmail,
-            @RequestHeader("X-User-Id") String userId,*/ @RequestBody ReorderColumnsRequest request) {
-        columnService.reorderColumns(request.getColumns());
+    public ResponseEntity<Void> reorderColumns(@AuthUser UUID currentUserId, @RequestBody ReorderColumnsRequest request) {
+        columnService.reorderColumns(request.getColumns(), currentUserId);
         return ResponseEntity.ok().build();
     }
+
+
 }
