@@ -14,4 +14,5 @@ public class BoardResponse {
     private Map<UUID, ColumnResponse> columns;
     private Map<UUID, CardResponse> cards;
     private Map<String, Object> settings;
+    private com.ikoyki.webtools.kanban.backend.entity.BoardRole role;
 }

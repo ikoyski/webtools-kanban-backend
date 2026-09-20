@@ -19,43 +19,49 @@ public class CardController {
     private final BoardMapper boardMapper;
 
     @PostMapping
-    public ResponseEntity<CardResponse> createCardEntity(/*@RequestHeader("X-User-Email") String userEmail,
-            @RequestHeader("X-User-Id") String userId,*/ @Valid @RequestBody CreateCardRequest request) {
+    public ResponseEntity<CardResponse> createCardEntity(@AuthUser UUID currentUserId, @Valid @RequestBody CreateCardRequest request) {
         CardEntity card = cardService.createCard(
                 request.getColumnId(),
                 request.getTitle(),
                 request.getDescription(),
                 request.getPriority(),
                 request.getDueDate(),
-                request.getLabels());
+                request.getLabels(),
+                currentUserId);
         return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 
+
+
     @PatchMapping("/{id}")
-    public ResponseEntity<CardResponse> updateCardEntity(/*@RequestHeader("X-User-Email") String userEmail,
-            @RequestHeader("X-User-Id") String userId,*/ @PathVariable UUID id, @RequestBody UpdateCardRequest request) {
+    public ResponseEntity<CardResponse> updateCardEntity(@AuthUser UUID currentUserId, @PathVariable UUID id, @RequestBody UpdateCardRequest request) {
         CardEntity card = cardService.updateCard(
                 id,
                 request.getTitle(),
                 request.getDescription(),
                 request.getPriority(),
                 request.getDueDate(),
-                request.getLabels());
+                request.getLabels(),
+                currentUserId);
         return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 
+
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCard(/*@RequestHeader("X-User-Email") String userEmail,
-            @RequestHeader("X-User-Id") String userId,*/ @PathVariable UUID id) {
-        cardService.deleteCard(id);
+    public ResponseEntity<Void> deleteCard(@AuthUser UUID currentUserId, @PathVariable UUID id) {
+        cardService.deleteCard(id, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
+
+
     @PatchMapping("/{id}/move")
-    public ResponseEntity<CardResponse> moveCardEntity(/*@RequestHeader("X-User-Email") String userEmail,
-            @RequestHeader("X-User-Id") String userId,*/ @PathVariable UUID id,
+    public ResponseEntity<CardResponse> moveCardEntity(@AuthUser UUID currentUserId, @PathVariable UUID id,
             @Valid @RequestBody MoveCardRequest request) {
-        CardEntity card = cardService.moveCard(id, request.getColumnId(), request.getPosition());
+        CardEntity card = cardService.moveCard(id, request.getColumnId(), request.getPosition(), currentUserId);
         return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
+
+
 }

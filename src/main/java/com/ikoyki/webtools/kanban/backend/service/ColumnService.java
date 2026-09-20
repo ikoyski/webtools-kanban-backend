@@ -19,14 +19,20 @@ public class ColumnService {
     private final BoardRepository boardRepository;
     private final ColumnRepository columnRepository;
     private final CardRepository cardRepository;
+    private final com.ikoyki.webtools.kanban.backend.service.BoardAccessService boardAccessService;
+
 
     @Transactional
-    public ColumnEntity createColumn(UUID boardId, String title) {
+    public ColumnEntity createColumn(UUID boardId, String title, UUID userId) {
+        boardAccessService.requireAtLeast(boardId, userId, BoardRole.EDITOR);
         List<ColumnEntity> existing = columnRepository.findByBoardIdOrderByPositionAsc(boardId);
         int position = existing.size();
 
+
+
         BoardEntity board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new RuntimeException("Board not found"));
+                .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("Board not found"));
+
 
         ColumnEntity column = ColumnEntity.builder()
                 .board(board)
@@ -38,29 +44,36 @@ public class ColumnService {
     }
 
     @Transactional
-    public ColumnEntity renameColumn(UUID id, String newTitle) {
+    public ColumnEntity renameColumn(UUID id, String newTitle, UUID userId) {
         ColumnEntity column = columnRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Column not found"));
+                .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("Column not found"));
+        boardAccessService.requireAtLeast(column.getBoard().getId(), userId, BoardRole.EDITOR);
         column.setTitle(newTitle);
         return columnRepository.save(column);
     }
+
+
 
     @Transactional
     public void reorderColumns(List<ReorderColumnsRequest.ColumnPosition> updates) {
         List<ColumnEntity> columns = new ArrayList<>();
         for (ReorderColumnsRequest.ColumnPosition update : updates) {
             ColumnEntity column = columnRepository.findById(update.getId())
-                    .orElseThrow(() -> new RuntimeException("Column not found: " + update.getId()));
+                    .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("Column not found: " + update.getId()));
             column.setPosition(update.getPosition());
             columns.add(column);
         }
+
         columnRepository.saveAll(columns);
     }
 
     @Transactional
-    public void deleteColumn(UUID columnId, UUID transferToId) {
+    public void deleteColumn(UUID columnId, UUID transferToId, UUID userId) {
         ColumnEntity column = columnRepository.findById(columnId)
-                .orElseThrow(() -> new RuntimeException("Column not found"));
+                .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("Column not found"));
+        boardAccessService.requireAtLeast(column.getBoard().getId(), userId, BoardRole.EDITOR);
+
+
 
         List<CardEntity> cards = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
 
@@ -73,7 +86,8 @@ public class ColumnService {
             }
 
             ColumnEntity destColumn = columnRepository.findById(transferToId)
-                    .orElseThrow(() -> new RuntimeException("Destination column not found"));
+                    .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("Destination column not found"));
+
 
             List<CardEntity> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(transferToId);
 

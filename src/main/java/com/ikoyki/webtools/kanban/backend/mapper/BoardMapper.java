@@ -14,10 +14,11 @@ import java.util.stream.Collectors;
 @Component
 public class BoardMapper {
 
-    public BoardResponse toResponse(BoardEntity board) {
+    public BoardResponse toResponse(BoardEntity board, com.ikoyki.webtools.kanban.backend.entity.BoardRole userRole) {
         if (board == null) {
             return null;
         }
+
 
         // Initialize our target top-level maps
         Map<UUID, ColumnResponse> columnMap = new LinkedHashMap<>();
@@ -67,8 +68,10 @@ public class BoardMapper {
                 .columns(columnMap)
                 .cards(cardMap)
                 .settings(Map.of("theme", "light"))
+                .role(userRole)
                 .build();
     }
+
 
     public ColumnResponse toColumnResponse(ColumnEntity column) {
         if (column == null) {

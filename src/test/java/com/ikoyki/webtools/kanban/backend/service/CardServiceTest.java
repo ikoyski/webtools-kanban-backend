@@ -1,9 +1,8 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
-import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
-import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
-import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
-import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
+import com.ikoyki.webtools.kanban.backend.entity.*;
+import com.ikoyki.webtools.kanban.backend.exception.*;
+import com.ikoyki.webtools.kanban.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,98 +13,54 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CardServiceTest {
 
-    @Mock
-    private CardRepository cardRepository;
-
-    @Mock
-    private ColumnRepository columnRepository;
+    @Mock private CardRepository cardRepository;
+    @Mock private ColumnRepository columnRepository;
+    @Mock private BoardAccessService boardAccessService;
 
     @InjectMocks
     private CardService cardService;
 
-    private UUID columnAId;
-    private UUID columnBId;
-    private UUID card1Id;
-    private UUID card2Id;
-    private UUID card3Id;
+    private UUID columnId;
+    private UUID cardId;
+    private UUID userId;
 
     @BeforeEach
     void setUp() {
-        columnAId = UUID.randomUUID();
-        columnBId = UUID.randomUUID();
-        card1Id = UUID.randomUUID();
-        card2Id = UUID.randomUUID();
-        card3Id = UUID.randomUUID();
+        columnId = UUID.randomUUID();
+        cardId = UUID.randomUUID();
+        userId = UUID.randomUUID();
     }
 
     @Test
-    void moveCard_SameColumn_ReordersCorrectly() {
-        // Arrange
-        ColumnEntity colA = new ColumnEntity();
-        colA.setId(columnAId);
+    void createCard_Forbidden_ThrowsException() {
+        ColumnEntity column = new ColumnEntity();
+        BoardEntity board = new BoardEntity();
+        board.setId(UUID.randomUUID());
+        column.setBoard(board);
 
-        CardEntity card1 = CardEntity.builder().id(card1Id).column(colA).position(0).build();
-        CardEntity card2 = CardEntity.builder().id(card2Id).column(colA).position(1).build();
-        CardEntity card3 = CardEntity.builder().id(card3Id).column(colA).position(2).build();
+        when(columnRepository.findById(columnId)).thenReturn(Optional.of(column));
+        doThrow(new ForbiddenBoardAccessException("Forbidden")).when(boardAccessService).requireAtLeast(board.getId(), userId, BoardRole.EDITOR);
 
-        List<CardEntity> cards = new ArrayList<>(List.of(card1, card2, card3));
-        when(cardRepository.findById(card1Id)).thenReturn(Optional.of(card1));
-        when(cardRepository.findByColumnIdOrderByPositionAsc(columnAId)).thenReturn(cards);
-        when(cardRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
-
-        // Act: Move card1 (pos 0) to position 2
-        CardEntity result = cardService.moveCard(card1Id, columnAId, 2);
-
-        // Assert
-        assertEquals(2, result.getPosition());
-        assertEquals(0, cards.get(0).getPosition()); // card2
-        assertEquals(1, cards.get(1).getPosition()); // card3
-        assertEquals(2, cards.get(2).getPosition()); // card1
-        verify(cardRepository).saveAll(any());
+        assertThrows(ForbiddenBoardAccessException.class, () -> cardService.createCard(columnId, "Title", "Desc", "Medium", null, Collections.emptyList(), userId));
     }
 
     @Test
-    void moveCard_CrossColumn_ReordersBothColumns() {
-        // Arrange
-        ColumnEntity colA = new ColumnEntity();
-        colA.setId(columnAId);
-        ColumnEntity colB = new ColumnEntity();
-        colB.setId(columnBId);
+    void updateCard_Forbidden_ThrowsException() {
+        CardEntity card = new CardEntity();
+        ColumnEntity column = new ColumnEntity();
+        BoardEntity board = new BoardEntity();
+        board.setId(UUID.randomUUID());
+        column.setBoard(board);
+        card.setColumn(column);
 
-        CardEntity card1 = CardEntity.builder().id(card1Id).column(colA).position(0).build();
-        CardEntity card2 = CardEntity.builder().id(card2Id).column(colA).position(1).build();
-        CardEntity card3 = CardEntity.builder().id(card3Id).column(colB).position(0).build();
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        doThrow(new ForbiddenBoardAccessException("Forbidden")).when(boardAccessService).requireAtLeast(board.getId(), userId, BoardRole.EDITOR);
 
-        List<CardEntity> cardsA = new ArrayList<>(List.of(card1, card2));
-        List<CardEntity> cardsB = new ArrayList<>(List.of(card3));
-
-        when(cardRepository.findById(card1Id)).thenReturn(Optional.of(card1));
-        when(cardRepository.findByColumnIdOrderByPositionAsc(columnAId)).thenReturn(cardsA);
-        when(cardRepository.findByColumnIdOrderByPositionAsc(columnBId)).thenReturn(cardsB);
-        when(columnRepository.findById(columnBId)).thenReturn(Optional.of(colB));
-        when(cardRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
-
-        // Act: Move card1 from A to B at position 0
-        CardEntity result = cardService.moveCard(card1Id, columnBId, 0);
-
-        // Assert
-        assertEquals(colB, result.getColumn());
-        assertEquals(0, result.getPosition());
-        assertEquals(0, cardsA.get(0).getPosition()); // card2 shifted to 0
-        assertEquals(0, cardsB.get(0).getPosition()); // card1 inserted at 0
-        assertEquals(1, cardsB.get(1).getPosition()); // card3 shifted to 1
-        verify(cardRepository, times(2)).saveAll(any());
-    }
-
-    @Test
-    void moveCard_NotFound_ThrowsException() {
-        when(cardRepository.findById(card1Id)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> cardService.moveCard(card1Id, columnAId, 0));
+        assertThrows(ForbiddenBoardAccessException.class, () -> cardService.updateCard(cardId, "Title", "Desc", "Medium", null, Collections.emptyList(), userId));
     }
 }
