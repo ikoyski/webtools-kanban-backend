@@ -15,6 +15,5 @@ public class BoardResponse {
     private String name;
     private Map<UUID, ColumnResponse> columns;
     private Map<UUID, CardResponse> cards;
-    private Map<String, Object> settings;
     private BoardRole role;
 }

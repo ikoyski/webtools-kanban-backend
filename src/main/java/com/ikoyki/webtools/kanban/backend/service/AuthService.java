@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.*;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -44,7 +46,13 @@ public class AuthService {
         providerRepository.save(localProvider);
 
         String jwt = jwtTokenProvider.generateToken(user);
-        return new AuthResponse(jwt, user.getEmail(), user.getDisplayName(), null);
+
+        return AuthResponse.builder()
+                .token(jwt).email(user.getEmail())
+                .displayName(user.getDisplayName())
+                .avatarUrl(null)
+                .settings(Map.of("theme", "light"))
+                .build();
     }
 
     // 2. TRADITIONAL LOGIN
@@ -58,6 +66,13 @@ public class AuthService {
 
         String jwt = jwtTokenProvider.generateToken(provider.getUser());
         UserEntity user = provider.getUser();
-        return new AuthResponse(jwt, user.getEmail(), user.getDisplayName(), user.getAvatarUrl());
+
+        return AuthResponse.builder()
+                .token(jwt)
+                .email(user.getEmail())
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .settings(Map.of("theme", "light"))
+                .build();
     }
 }

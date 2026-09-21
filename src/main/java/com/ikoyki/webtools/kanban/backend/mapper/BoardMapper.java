@@ -67,7 +67,6 @@ public class BoardMapper {
                 .name(board.getName())
                 .columns(columnMap)
                 .cards(cardMap)
-                .settings(Map.of("theme", "light"))
                 .role(userRole)
                 .build();
     }

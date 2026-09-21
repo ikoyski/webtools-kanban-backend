@@ -32,15 +32,27 @@ public class BoardMemberController {
     }
 
     @PostMapping
-    public ResponseEntity<BoardMemberEntity> addMember(@PathVariable UUID boardId, @AuthUser UUID currentUserId,
+    public ResponseEntity<BoardMemberResponse> addMember(@PathVariable UUID boardId, @AuthUser UUID currentUserId,
             @RequestBody BoardMemberRequest request) {
-        return ResponseEntity.ok(boardMemberService.addMember(boardId, request, currentUserId));
+        BoardMemberEntity member = boardMemberService.addMember(boardId, request, currentUserId);
+        return ResponseEntity.ok(BoardMemberResponse.builder()
+                .userId(member.getUser().getId())
+                .email(member.getUser().getEmail())
+                .displayName(member.getUser().getDisplayName())
+                .role(member.getRole())
+                .build());
     }
 
     @PatchMapping("/{userId}")
-    public ResponseEntity<BoardMemberEntity> updateRole(@PathVariable UUID boardId, @PathVariable UUID userId,
+    public ResponseEntity<BoardMemberResponse> updateRole(@PathVariable UUID boardId, @PathVariable UUID userId,
             @AuthUser UUID currentUserId, @RequestBody UpdateMemberRoleRequest request) {
-        return ResponseEntity.ok(boardMemberService.updateRole(boardId, userId, request, currentUserId));
+        BoardMemberEntity member = boardMemberService.updateRole(boardId, userId, request, currentUserId);
+        return ResponseEntity.ok(BoardMemberResponse.builder()
+                .userId(member.getUser().getId())
+                .email(member.getUser().getEmail())
+                .displayName(member.getUser().getDisplayName())
+                .role(member.getRole())
+                .build());
     }
 
     @DeleteMapping("/{userId}")
