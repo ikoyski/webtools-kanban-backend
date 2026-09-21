@@ -3,6 +3,7 @@ package com.ikoyki.webtools.kanban.backend.mapper;
 import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
+import com.ikoyki.webtools.kanban.backend.entity.BoardRole;
 import com.ikoyki.webtools.kanban.backend.dto.response.BoardResponse;
 import com.ikoyki.webtools.kanban.backend.dto.response.ColumnResponse;
 import com.ikoyki.webtools.kanban.backend.dto.response.CardResponse;
@@ -14,11 +15,10 @@ import java.util.stream.Collectors;
 @Component
 public class BoardMapper {
 
-    public BoardResponse toResponse(BoardEntity board, com.ikoyki.webtools.kanban.backend.entity.BoardRole userRole) {
+    public BoardResponse toResponse(BoardEntity board, BoardRole userRole) {
         if (board == null) {
             return null;
         }
-
 
         // Initialize our target top-level maps
         Map<UUID, ColumnResponse> columnMap = new LinkedHashMap<>();
@@ -71,7 +71,6 @@ public class BoardMapper {
                 .role(userRole)
                 .build();
     }
-
 
     public ColumnResponse toColumnResponse(ColumnEntity column) {
         if (column == null) {

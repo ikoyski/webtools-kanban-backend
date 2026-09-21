@@ -5,6 +5,7 @@ import com.ikoyki.webtools.kanban.backend.dto.response.ColumnResponse;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.mapper.BoardMapper;
 import com.ikoyki.webtools.kanban.backend.service.ColumnService;
+import com.ikoyki.webtools.kanban.backend.security.AuthUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +20,11 @@ public class ColumnController {
     private final BoardMapper boardMapper;
 
     @PostMapping
-    public ResponseEntity<ColumnResponse> createColumn(@AuthUser UUID currentUserId, @Valid @RequestBody CreateColumnRequest request) {
+    public ResponseEntity<ColumnResponse> createColumn(@AuthUser UUID currentUserId,
+            @Valid @RequestBody CreateColumnRequest request) {
         ColumnEntity column = columnService.createColumn(request.getBoardId(), request.getTitle(), currentUserId);
         return ResponseEntity.ok(boardMapper.toColumnResponse(column));
     }
-
-
 
     @PatchMapping("/{id}")
     public ResponseEntity<ColumnResponse> renameColumn(@AuthUser UUID currentUserId, @PathVariable UUID id,
@@ -32,8 +32,6 @@ public class ColumnController {
         ColumnEntity column = columnService.renameColumn(id, request.getTitle(), currentUserId);
         return ResponseEntity.ok(boardMapper.toColumnResponse(column));
     }
-
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteColumn(
@@ -44,13 +42,10 @@ public class ColumnController {
         return ResponseEntity.noContent().build();
     }
 
-
-
     @PatchMapping("/reorder")
-    public ResponseEntity<Void> reorderColumns(@AuthUser UUID currentUserId, @RequestBody ReorderColumnsRequest request) {
-        columnService.reorderColumns(request.getColumns(), currentUserId);
+    public ResponseEntity<Void> reorderColumns(@RequestBody ReorderColumnsRequest request) {
+        columnService.reorderColumns(request.getColumns());
         return ResponseEntity.ok().build();
     }
-
 
 }

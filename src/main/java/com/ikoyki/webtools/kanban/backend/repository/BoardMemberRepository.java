@@ -1,6 +1,7 @@
 package com.ikoyki.webtools.kanban.backend.repository;
 
 import com.ikoyki.webtools.kanban.backend.entity.BoardMemberEntity;
+import com.ikoyki.webtools.kanban.backend.entity.BoardRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,5 +16,5 @@ public interface BoardMemberRepository extends JpaRepository<BoardMemberEntity, 
     List<BoardMemberEntity> findAllByBoardId(UUID boardId);
     boolean existsByBoardIdAndUserId(UUID boardId, UUID userId);
 
-    long countByBoardIdAndRole(UUID boardId, com.ikoyki.webtools.kanban.backend.entity.BoardRole role);
+    long countByBoardIdAndRole(UUID boardId, BoardRole role);
 }

@@ -1,5 +1,7 @@
 package com.ikoyki.webtools.kanban.backend.dto.request;
 
+import com.ikoyki.webtools.kanban.backend.entity.Priority;
+
 import lombok.*;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,7 @@ public class ImportBoardRequest {
         private UUID id;
         private String title;
         private String description;
-        private String priority;
+        private Priority priority;
         private String dueDate; // ISO date string
         private List<String> labels;
         private Integer position;

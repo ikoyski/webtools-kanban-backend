@@ -45,7 +45,7 @@ CREATE TABLE card (
     column_id     UUID NOT NULL REFERENCES column_entity(id) ON DELETE CASCADE,
     title         TEXT NOT NULL,
     description   TEXT NOT NULL DEFAULT '',
-    priority      TEXT NOT NULL DEFAULT 'Medium' CHECK (priority IN ('Low','Medium','High')),
+    priority      TEXT NOT NULL DEFAULT 'MEDIUM' CHECK (priority IN ('LOW','MEDIUM','HIGH')),
     due_date      DATE,
     labels        JSONB NOT NULL DEFAULT '[]'::jsonb,
     position      INTEGER NOT NULL,

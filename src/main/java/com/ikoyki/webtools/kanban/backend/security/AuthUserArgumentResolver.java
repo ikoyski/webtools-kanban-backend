@@ -1,16 +1,16 @@
 package com.ikoyki.webtools.kanban.backend.security;
 
 import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
-import com.ikoyki.webtools.kanban.backend.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
@@ -25,14 +25,14 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(AuthUser.class) &&
-               parameter.getParameterType().equals(UUID.class);
+                parameter.getParameterType().equals(UUID.class);
     }
 
     @Override
     public Object resolveArgument(MethodParameter parameter,
-                                  ModelAndViewContainer mavContainer,
-                                  org.springframework.web.context.request.NativeWebRequest webRequest,
-                                  org.springframework.web.servlet.mvc.method.annotation.WebDataBinderFactory binderFactory) {
+            ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest,
+            WebDataBinderFactory binderFactory) {
 
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         if (request == null) {

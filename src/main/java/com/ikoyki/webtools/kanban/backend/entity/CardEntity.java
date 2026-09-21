@@ -34,8 +34,9 @@ public class CardEntity {
     @Column(nullable = false)
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String priority;
+    private Priority priority;
 
     @Column(name = "due_date")
     private LocalDate dueDate;

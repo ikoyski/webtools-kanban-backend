@@ -125,7 +125,7 @@ public class BoardService {
                                 .column(column)
                                 .title(cardImp.getTitle())
                                 .description(cardImp.getDescription() != null ? cardImp.getDescription() : "")
-                                .priority(cardImp.getPriority() != null ? cardImp.getPriority() : "Medium")
+                                .priority(cardImp.getPriority() != null ? cardImp.getPriority() : Priority.MEDIUM)
                                 .dueDate(cardImp.getDueDate() != null ? LocalDate.parse(cardImp.getDueDate()) : null)
                                 .labels(cardImp.getLabels() != null ? cardImp.getLabels() : Collections.emptyList())
                                 .position(j)

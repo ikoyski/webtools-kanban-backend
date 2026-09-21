@@ -2,8 +2,11 @@ package com.ikoyki.webtools.kanban.backend.service;
 
 import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
+import com.ikoyki.webtools.kanban.backend.entity.Priority;
+import com.ikoyki.webtools.kanban.backend.entity.BoardRole;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
+import com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,17 +17,15 @@ import java.util.*;
 public class CardService {
     private final CardRepository cardRepository;
     private final ColumnRepository columnRepository;
-    private final com.ikoyki.webtools.kanban.backend.service.BoardAccessService boardAccessService;
-
+    private final BoardAccessService boardAccessService;
 
     @Transactional
-    public CardEntity createCard(UUID columnId, String title, String description, String priority,
+    public CardEntity createCard(UUID columnId, String title, String description, Priority priority,
             java.time.LocalDate dueDate, List<String> labels, UUID userId) {
         ColumnEntity column = columnRepository.findById(columnId)
-                .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("Column not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Column not found"));
         boardAccessService.requireAtLeast(column.getBoard().getId(), userId, BoardRole.EDITOR);
-
-
 
         List<CardEntity> siblings = cardRepository.findByColumnIdOrderByPositionAsc(columnId);
         int position = siblings.size();
@@ -33,7 +34,7 @@ public class CardService {
                 .column(column)
                 .title(title)
                 .description(description != null ? description : "")
-                .priority(priority != null ? priority : "Medium")
+                .priority(priority != null ? priority : Priority.MEDIUM)
                 .dueDate(dueDate)
                 .labels(labels != null ? labels : Collections.emptyList())
                 .position(position)
@@ -43,13 +44,12 @@ public class CardService {
     }
 
     @Transactional
-    public CardEntity updateCard(UUID id, String title, String description, String priority,
+    public CardEntity updateCard(UUID id, String title, String description, Priority priority,
             java.time.LocalDate dueDate, List<String> labels, UUID userId) {
         CardEntity card = cardRepository.findById(id)
-                .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("CardEntity not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "CardEntity not found"));
         boardAccessService.requireAtLeast(card.getColumn().getBoard().getId(), userId, BoardRole.EDITOR);
-
-
 
         if (title != null)
             card.setTitle(title);
@@ -68,10 +68,9 @@ public class CardService {
     @Transactional
     public void deleteCard(UUID id, UUID userId) {
         CardEntity card = cardRepository.findById(id)
-                .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("CardEntity not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "CardEntity not found"));
         boardAccessService.requireAtLeast(card.getColumn().getBoard().getId(), userId, BoardRole.EDITOR);
-
-
 
         UUID columnId = card.getColumn().getId();
         cardRepository.delete(card);
@@ -81,10 +80,9 @@ public class CardService {
     @Transactional
     public CardEntity moveCard(UUID cardId, UUID destColumnId, Integer destPosition, UUID userId) {
         CardEntity card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("CardEntity not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "CardEntity not found"));
         boardAccessService.requireAtLeast(card.getColumn().getBoard().getId(), userId, BoardRole.EDITOR);
-
-
 
         UUID sourceColumnId = card.getColumn().getId();
 
@@ -105,8 +103,8 @@ public class CardService {
 
             // Insert into destination
             ColumnEntity destColumn = columnRepository.findById(destColumnId)
-                    .orElseThrow(() -> new com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException("Destination column not found"));
-
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Destination column not found"));
 
             List<CardEntity> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(destColumnId);
             int pos = Math.min(destPosition, destSiblings.size());

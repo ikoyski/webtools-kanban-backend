@@ -1,5 +1,7 @@
 package com.ikoyki.webtools.kanban.backend.dto.response;
 
+import com.ikoyki.webtools.kanban.backend.entity.BoardRole;
+
 import lombok.*;
 import java.util.Map;
 import java.util.UUID;
@@ -14,5 +16,5 @@ public class BoardResponse {
     private Map<UUID, ColumnResponse> columns;
     private Map<UUID, CardResponse> cards;
     private Map<String, Object> settings;
-    private com.ikoyki.webtools.kanban.backend.entity.BoardRole role;
+    private BoardRole role;
 }

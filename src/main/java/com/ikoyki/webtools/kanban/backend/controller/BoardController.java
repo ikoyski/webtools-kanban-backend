@@ -27,7 +27,8 @@ public class BoardController {
     }
 
     @PostMapping
-    public ResponseEntity<BoardResponse> createBoard(@AuthUser UUID currentUserId, @RequestBody CreateBoardRequest request) {
+    public ResponseEntity<BoardResponse> createBoard(@AuthUser UUID currentUserId,
+            @RequestBody CreateBoardRequest request) {
         BoardEntity board = boardService.createBoard(request.getName(), currentUserId);
         BoardRole role = BoardRole.OWNER;
         return ResponseEntity.ok(boardMapper.toResponse(board, role));
@@ -52,7 +53,8 @@ public class BoardController {
     }
 
     @PutMapping("/{boardId}/import")
-    public ResponseEntity<BoardResponse> importBoard(@PathVariable UUID boardId, @AuthUser UUID currentUserId, @RequestBody ImportBoardRequest request) {
+    public ResponseEntity<BoardResponse> importBoard(@PathVariable UUID boardId, @AuthUser UUID currentUserId,
+            @RequestBody ImportBoardRequest request) {
         BoardEntity board = boardService.importBoard(boardId, request, currentUserId);
         BoardRole role = boardMemberRepository.findByBoardIdAndUserId(boardId, currentUserId)
                 .map(BoardMemberEntity::getRole)
@@ -61,7 +63,8 @@ public class BoardController {
     }
 
     @PatchMapping("/{boardId}")
-    public ResponseEntity<BoardResponse> renameBoard(@PathVariable UUID boardId, @AuthUser UUID currentUserId, @RequestBody UpdateBoardRequest request) {
+    public ResponseEntity<BoardResponse> renameBoard(@PathVariable UUID boardId, @AuthUser UUID currentUserId,
+            @RequestBody UpdateBoardRequest request) {
         BoardEntity board = boardService.renameBoard(boardId, request.getName(), currentUserId);
         BoardRole role = boardMemberRepository.findByBoardIdAndUserId(boardId, currentUserId)
                 .map(BoardMemberEntity::getRole)

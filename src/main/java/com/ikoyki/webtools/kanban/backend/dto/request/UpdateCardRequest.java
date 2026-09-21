@@ -1,5 +1,7 @@
 package com.ikoyki.webtools.kanban.backend.dto.request;
 
+import com.ikoyki.webtools.kanban.backend.entity.Priority;
+
 import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,7 +13,7 @@ import java.util.List;
 public class UpdateCardRequest {
     private String title;
     private String description;
-    private String priority;
+    private Priority priority;
     private LocalDate dueDate;
     private List<String> labels;
 }

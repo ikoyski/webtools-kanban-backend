@@ -46,7 +46,7 @@ class CardServiceTest {
         when(columnRepository.findById(columnId)).thenReturn(Optional.of(column));
         doThrow(new ForbiddenBoardAccessException("Forbidden")).when(boardAccessService).requireAtLeast(board.getId(), userId, BoardRole.EDITOR);
 
-        assertThrows(ForbiddenBoardAccessException.class, () -> cardService.createCard(columnId, "Title", "Desc", "Medium", null, Collections.emptyList(), userId));
+        assertThrows(ForbiddenBoardAccessException.class, () -> cardService.createCard(columnId, "Title", "Desc", Priority.MEDIUM, null, Collections.emptyList(), userId));
     }
 
     @Test
@@ -61,6 +61,6 @@ class CardServiceTest {
         when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
         doThrow(new ForbiddenBoardAccessException("Forbidden")).when(boardAccessService).requireAtLeast(board.getId(), userId, BoardRole.EDITOR);
 
-        assertThrows(ForbiddenBoardAccessException.class, () -> cardService.updateCard(cardId, "Title", "Desc", "Medium", null, Collections.emptyList(), userId));
+        assertThrows(ForbiddenBoardAccessException.class, () -> cardService.updateCard(cardId, "Title", "Desc", Priority.MEDIUM, null, Collections.emptyList(), userId));
     }
 }

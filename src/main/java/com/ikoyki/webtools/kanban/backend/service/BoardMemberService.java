@@ -46,7 +46,8 @@ public class BoardMemberService {
     }
 
     @Transactional
-    public BoardMemberEntity updateRole(UUID boardId, UUID userIdToUpdate, UpdateMemberRoleRequest request, UUID actorId) {
+    public BoardMemberEntity updateRole(UUID boardId, UUID userIdToUpdate, UpdateMemberRoleRequest request,
+            UUID actorId) {
         boardAccessService.requireAtLeast(boardId, actorId, BoardRole.OWNER);
 
         BoardMemberEntity member = boardMemberRepository.findByBoardIdAndUserId(boardId, userIdToUpdate)
@@ -71,7 +72,8 @@ public class BoardMemberService {
             boardAccessService.requireAtLeast(boardId, actorId, BoardRole.OWNER);
         }
 
-        if (member.getRole() == BoardRole.OWNER && boardMemberRepository.countByBoardIdAndRole(boardId, BoardRole.OWNER) <= 1) {
+        if (member.getRole() == BoardRole.OWNER
+                && boardMemberRepository.countByBoardIdAndRole(boardId, BoardRole.OWNER) <= 1) {
             throw new BadRequestException("Cannot remove the last owner of the board");
         }
 

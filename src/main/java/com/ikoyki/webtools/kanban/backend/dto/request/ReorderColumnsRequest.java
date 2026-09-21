@@ -9,6 +9,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReorderColumnsRequest {
+    private List<ColumnPosition> columns;
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -17,6 +19,4 @@ public class ReorderColumnsRequest {
         private UUID id;
         private Integer position;
     }
-
-    private List<ColumnPosition> columns;
 }

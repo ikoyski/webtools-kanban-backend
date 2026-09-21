@@ -1,5 +1,6 @@
 package com.ikoyki.webtools.kanban.backend.dto.response;
 
+import com.ikoyki.webtools.kanban.backend.entity.Priority;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -14,7 +15,7 @@ public class CardResponse {
     private UUID id;
     private String title;
     private String description;
-    private String priority;
+    private Priority priority;
     private LocalDate dueDate;
     private List<String> labels;
     private Integer position;

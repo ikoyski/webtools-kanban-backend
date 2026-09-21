@@ -5,6 +5,7 @@ import com.ikoyki.webtools.kanban.backend.dto.response.CardResponse;
 import com.ikoyki.webtools.kanban.backend.entity.CardEntity;
 import com.ikoyki.webtools.kanban.backend.mapper.BoardMapper;
 import com.ikoyki.webtools.kanban.backend.service.CardService;
+import com.ikoyki.webtools.kanban.backend.security.AuthUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,8 @@ public class CardController {
     private final BoardMapper boardMapper;
 
     @PostMapping
-    public ResponseEntity<CardResponse> createCardEntity(@AuthUser UUID currentUserId, @Valid @RequestBody CreateCardRequest request) {
+    public ResponseEntity<CardResponse> createCardEntity(@AuthUser UUID currentUserId,
+            @Valid @RequestBody CreateCardRequest request) {
         CardEntity card = cardService.createCard(
                 request.getColumnId(),
                 request.getTitle(),
@@ -31,10 +33,9 @@ public class CardController {
         return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 
-
-
     @PatchMapping("/{id}")
-    public ResponseEntity<CardResponse> updateCardEntity(@AuthUser UUID currentUserId, @PathVariable UUID id, @RequestBody UpdateCardRequest request) {
+    public ResponseEntity<CardResponse> updateCardEntity(@AuthUser UUID currentUserId, @PathVariable UUID id,
+            @RequestBody UpdateCardRequest request) {
         CardEntity card = cardService.updateCard(
                 id,
                 request.getTitle(),
@@ -46,15 +47,11 @@ public class CardController {
         return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 
-
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCard(@AuthUser UUID currentUserId, @PathVariable UUID id) {
         cardService.deleteCard(id, currentUserId);
         return ResponseEntity.noContent().build();
     }
-
-
 
     @PatchMapping("/{id}/move")
     public ResponseEntity<CardResponse> moveCardEntity(@AuthUser UUID currentUserId, @PathVariable UUID id,
@@ -62,6 +59,5 @@ public class CardController {
         CardEntity card = cardService.moveCard(id, request.getColumnId(), request.getPosition(), currentUserId);
         return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
-
 
 }

@@ -1,5 +1,6 @@
 package com.ikoyki.webtools.kanban.backend.dto.request;
 
+import com.ikoyki.webtools.kanban.backend.entity.Priority;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -17,7 +18,7 @@ public class CreateCardRequest {
     @NotBlank
     private String title;
     private String description;
-    private String priority;
+    private Priority priority;
     private LocalDate dueDate;
     private List<String> labels;
 }

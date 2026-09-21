@@ -28,8 +28,7 @@ public class BoardAccessService {
         BoardRole userRole = requireMembership(boardId, userId);
         if (userRole.ordinal() < minRole.ordinal()) {
             throw new ForbiddenBoardAccessException(
-                String.format("Role %s is required, but you have %s", minRole, userRole)
-            );
+                    String.format("Role %s is required, but you have %s", minRole, userRole));
         }
     }
 }

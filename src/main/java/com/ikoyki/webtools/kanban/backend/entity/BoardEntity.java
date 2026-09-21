@@ -24,6 +24,8 @@ public class BoardEntity {
     @Column(nullable = false)
     private String name;
 
+    private UUID createdBy;
+
     @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();

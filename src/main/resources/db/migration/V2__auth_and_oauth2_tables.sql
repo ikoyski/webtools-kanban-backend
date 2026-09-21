@@ -25,13 +25,11 @@ CREATE TABLE user_provider (
 CREATE INDEX idx_user_provider_search ON user_provider(provider_type, provider_id);
 
 -- 3. Board Membership
-CREATE TYPE board_role AS ENUM ('OWNER', 'EDITOR', 'VIEWER');
-
 CREATE TABLE board_member (
     id          UUID PRIMARY KEY DEFAULT uuidv7(),
     board_id    UUID NOT NULL REFERENCES board(id) ON DELETE CASCADE,
     user_id     UUID NOT NULL REFERENCES user_entity(id) ON DELETE CASCADE,
-    role        board_role NOT NULL,
+    role        VARCHAR(20) NOT NULL CHECK (role IN ('OWNER', 'EDITOR', 'VIEWER')),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (board_id, user_id)
 );
