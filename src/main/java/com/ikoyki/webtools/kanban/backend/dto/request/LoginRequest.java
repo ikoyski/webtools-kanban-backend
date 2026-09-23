@@ -17,5 +17,5 @@ public class LoginRequest {
     @NotNull
     private String password;
 
-    private String cfTurnstileResponse;
+    private String turnstileToken;
 }

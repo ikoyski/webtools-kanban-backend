@@ -19,10 +19,10 @@ public class TurnstileService {
     private final RestTemplate restTemplate;
 
     @Value("${cloudflare.turnstile.secret}")
-    private String secretKey;
+    private String SECRET_KEY;
 
     @Value("${cloudflare.turnstile.siteverify-url}")
-    private static String VERIFY_URL;
+    private String VERIFY_URL;
 
     public boolean verify(String token, String remoteIp) {
         if (token == null || token.isBlank()) {
@@ -35,7 +35,7 @@ public class TurnstileService {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("secret", secretKey);
+            map.add("secret", SECRET_KEY);
             map.add("response", token);
             map.add("remoteip", remoteIp);
 

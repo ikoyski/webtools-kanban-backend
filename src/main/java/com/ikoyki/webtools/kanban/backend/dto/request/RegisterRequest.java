@@ -21,5 +21,5 @@ public class RegisterRequest {
     @NotNull
     private String displayName;
 
-    private String cfTurnstileResponse;
+    private String turnstileToken;
 }

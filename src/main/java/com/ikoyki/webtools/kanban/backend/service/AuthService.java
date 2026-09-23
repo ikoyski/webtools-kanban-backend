@@ -35,7 +35,7 @@ public class AuthService {
     // 1. TRADITIONAL SIGNUP
     @Transactional
     public AuthResponse registerLocal(RegisterRequest request, String remoteIp) {
-        if (!turnstileService.verify(request.getCfTurnstileResponse(), remoteIp)) {
+        if (!turnstileService.verify(request.getTurnstileToken(), remoteIp)) {
             throw new BadRequestException("Invalid Turnstile token");
         }
 
@@ -66,7 +66,7 @@ public class AuthService {
 
     // 2. TRADITIONAL LOGIN
     public AuthResponse loginLocal(LoginRequest request, String remoteIp) {
-        if (!turnstileService.verify(request.getCfTurnstileResponse(), remoteIp)) {
+        if (!turnstileService.verify(request.getTurnstileToken(), remoteIp)) {
             throw new BadRequestException("Invalid Turnstile token");
         }
 
