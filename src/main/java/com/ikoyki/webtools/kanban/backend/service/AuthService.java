@@ -9,7 +9,11 @@ import com.ikoyki.webtools.kanban.backend.exception.BadRequestException;
 import com.ikoyki.webtools.kanban.backend.exception.BadCredentialsException;
 import com.ikoyki.webtools.kanban.backend.repository.UserProviderRepository;
 import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
+import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
 import com.ikoyki.webtools.kanban.backend.security.JwtTokenProvider;
+import com.ikoyki.webtools.kanban.backend.service.TurnstileService;
+
+import lombok.RequiredArgsConstructor;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,10 +30,15 @@ public class AuthService {
     private final UserProviderRepository providerRepository;
     private final PasswordEncoder passwordEncoder; // BCryptPasswordEncoder bean
     private final JwtTokenProvider jwtTokenProvider; // Your custom JWT generator
+    private final TurnstileService turnstileService;
 
     // 1. TRADITIONAL SIGNUP
     @Transactional
-    public AuthResponse registerLocal(RegisterRequest request) {
+    public AuthResponse registerLocal(RegisterRequest request, String remoteIp) {
+        if (!turnstileService.verify(request.getCfTurnstileResponse(), remoteIp)) {
+            throw new BadRequestException("Invalid Turnstile token");
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email already in use");
         }
@@ -56,7 +65,11 @@ public class AuthService {
     }
 
     // 2. TRADITIONAL LOGIN
-    public AuthResponse loginLocal(LoginRequest request) {
+    public AuthResponse loginLocal(LoginRequest request, String remoteIp) {
+        if (!turnstileService.verify(request.getCfTurnstileResponse(), remoteIp)) {
+            throw new BadRequestException("Invalid Turnstile token");
+        }
+
         UserProviderEntity provider = providerRepository.findByProviderTypeAndUserEmail("LOCAL", request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
