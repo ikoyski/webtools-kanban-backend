@@ -43,8 +43,9 @@ public class ColumnController {
     }
 
     @PatchMapping("/reorder")
-    public ResponseEntity<Void> reorderColumns(@RequestBody ReorderColumnsRequest request) {
-        columnService.reorderColumns(request.getColumns());
+    public ResponseEntity<Void> reorderColumns(@AuthUser UUID currentUserId,
+            @RequestBody ReorderColumnsRequest request) {
+        columnService.reorderColumns(request.getColumns(), currentUserId);
         return ResponseEntity.ok().build();
     }
 

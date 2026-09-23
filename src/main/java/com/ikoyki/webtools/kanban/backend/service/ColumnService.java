@@ -53,16 +53,20 @@ public class ColumnService {
     }
 
     @Transactional
-    public void reorderColumns(List<ReorderColumnsRequest.ColumnPosition> updates) {
+    public void reorderColumns(List<ReorderColumnsRequest.ColumnPosition> updates, UUID userId) {
+        if (updates.isEmpty())
+            return;
+        ColumnEntity first = columnRepository.findById(updates.get(0).getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Column not found"));
+        boardAccessService.requireAtLeast(first.getBoard().getId(), userId, BoardRole.EDITOR);
+
         List<ColumnEntity> columns = new ArrayList<>();
         for (ReorderColumnsRequest.ColumnPosition update : updates) {
             ColumnEntity column = columnRepository.findById(update.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Column not found: " + update.getId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Column not found: " + update.getId()));
             column.setPosition(update.getPosition());
             columns.add(column);
         }
-
         columnRepository.saveAll(columns);
     }
 
