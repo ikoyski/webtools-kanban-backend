@@ -10,7 +10,8 @@ Spring Boot 3 backend for a Kanban board application.
 - **Quality Analysis**: Monitored via SonarCloud for bugs, vulnerabilities, and code smells.
 - **Schema Management**: Flyway
 - **API**: RESTful, versioned at `/api/v1` (Supports multi-board RBAC: OWNER, EDITOR, VIEWER)
-- **Auth**: BCrypt password hashing (Spring Security's `PasswordEncoder`) + JWT issuance (`jjwt`) via `/v1/auth/signup` and `/v1/auth/login`
+- **Auth**: BCrypt password hashing (Spring Security's `PasswordEncoder`) + JWT issuance (`jjwt`).
+- **Bot Protection**: Cloudflare Turnstile verification implemented in `TurnstileService` for all `/v1/auth/*` endpoints.
 - **Package**: `com.ikoyki.webtools.kanban.backend`
 
 ## Build & Run Commands
@@ -22,6 +23,7 @@ Spring Boot 3 backend for a Kanban board application.
 ## Authentication & Trust Boundary
 **Read this before touching `@AuthUser`, `AuthUserArgumentResolver`, or anything auth-related.**
 
+- **Bot Defense**: Public authentication endpoints (`/v1/auth/signup`, `/v1/auth/login`) are protected by Cloudflare Turnstile. The `TurnstileService` validates the client token against Cloudflare's API before any credential check or user creation occurs.
 - `POST /v1/auth/signup` / `POST /v1/auth/login` issue a JWT (`JwtTokenProvider`), but **this
   service does not validate that JWT on subsequent requests.** There is no `SecurityFilterChain`
   and no JWT filter — `SecurityConfig` only defines the `PasswordEncoder` bean.
@@ -36,6 +38,7 @@ Spring Boot 3 backend for a Kanban board application.
   code here can fix on its own. Do not "fix" this by adding ad hoc JWT validation to individual
   controllers; if this needs to change, it's an architecture decision (see `backend-plan.md`),
   not a local patch.
+  Note: The initial identity creation and authentication endpoints (/signup, /login) are gated by TurnstileService to prevent automated bot registrations and brute-force attacks.
 
 ## Authorization (RBAC)
 - Roles: `BoardRole` enum, declared `VIEWER, EDITOR, OWNER` — the declaration order matters,
