@@ -21,7 +21,8 @@ public class TurnstileService {
     @Value("${cloudflare.turnstile.secret}")
     private String secretKey;
 
-    private static final String VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    @Value("${cloudflare.turnstile.siteverify-url}")
+    private static String VERIFY_URL;
 
     public boolean verify(String token, String remoteIp) {
         if (token == null || token.isBlank()) {
