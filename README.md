@@ -4,13 +4,13 @@ A Spring Boot 3 backend for the WebTools Kanban board application. This service 
 
 ## 🚀 Tech Stack
 
-
 - **Language**: Java 21
 - **Framework**: Spring Boot 3.4.2
 - **Cloud**: Spring Cloud (Eureka, Config)
 - **Build Tool**: Maven
 - **Database**: PostgreSQL 17
 - **Migrations**: Flyway
+- **Auth**: Spring Security (BCrypt password hashing) + JWT (jjwt) for local signup/login
 - **API Documentation**: SpringDoc OpenAPI (Swagger UI)
 - **Observability**: Spring Boot Actuator, Micrometer Tracing (Brave, Zipkin)
 
@@ -42,20 +42,50 @@ Once the application is running, you can access the interactive API documentatio
 ### Base URL
 `http://localhost:8080/api/v1`
 
+### Authentication
+- `POST /auth/signup`: Register a new local user (email + password) and receive a JWT.
+- `POST /auth/login`: Authenticate a local user and receive a JWT.
+
+> **Note**: this service does not currently validate the JWT on subsequent requests. Every
+> other endpoint identifies the caller via a trusted `X-User-Id` header, which is expected to
+> be set by an upstream API gateway after validating the JWT. This service must not be exposed
+> directly to untrusted clients — see `CLAUDE.md` for details.
+
 ### Key Endpoints
 - `GET /boards`: List boards the current user belongs to.
 - `POST /boards`: Create a new board.
 - `GET /boards/{boardId}`: Fetch full state of a specific board.
+- `GET /boards/{boardId}/export`: Export full state of a specific board.
+- `PUT /boards/{boardId}/import`: Transactionally replace entire board state.
+- `PATCH /boards/{boardId}`: Rename a board.
+- `DELETE /boards/{boardId}`: Delete a board (OWNER only).
 - `GET /boards/{boardId}/members`: List members and roles of a board.
-- `POST /boards/{boardId}/members`: Add a member to a board.
-- `PATCH /boards/{boardId}/members/{userId}`: Update a member's role.
-- `DELETE /boards/{boardId}/members/{userId}`: Remove a member from a board.
+- `POST /boards/{boardId}/members`: Add a member to a board (OWNER only).
+- `PATCH /boards/{boardId}/members/{userId}`: Update a member's role (OWNER only).
+- `DELETE /boards/{boardId}/members/{userId}`: Remove a member from a board (OWNER, or self).
 - `POST /columns`: Create a new column.
+- `PATCH /columns/{id}`: Rename a column.
+- `PATCH /columns/reorder`: Reorder columns within a board.
 - `DELETE /columns/{id}?transferTo={id}`: Delete a column and optionally transfer cards.
 - `POST /cards`: Create a new card.
+- `PATCH /cards/{id}`: Update a card.
 - `PATCH /cards/{id}/move`: Move a card within or across columns.
-- `PUT /boards/{boardId}/import`: Transactionally replace entire board state.
+- `DELETE /cards/{id}`: Delete a card.
 
+### Roles & Permissions
+Every board has members with one of three roles: `VIEWER`, `EDITOR`, `OWNER` (in ascending
+order of privilege).
+
+| Action | Minimum role |
+|---|---|
+| View board / export / list members | `VIEWER` |
+| Create/edit/delete/move cards, create/rename/delete columns, reorder columns | `EDITOR` |
+| Rename board, import board | `EDITOR` |
+| Delete board | `OWNER` |
+| Add/remove members, change member roles | `OWNER` |
+| Leave a board (remove yourself) | none — any member can leave |
+
+A board must always have at least one `OWNER`; demoting or removing the last owner is blocked.
 
 ## 🛡️ Quality Assurance
 
@@ -64,11 +94,11 @@ The project is automatically analyzed for bugs, vulnerabilities, and code smells
 ## 📉 Database Schema
 
 - `user_entity`: User profiles and identities.
+- `user_provider`: Authentication providers per user (e.g. local email/password credentials).
 - `board`: Top-level board metadata.
 - `board_member`: User-to-board membership with roles (OWNER, EDITOR, VIEWER).
 - `column_entity`: Columns belonging to a board, ordered by `position`.
 - `card`: Cards belonging to a column, ordered by `position`. Labels are stored as `JSONB`.
-
 
 ## 🩺 Health Check
 Check the service status:
