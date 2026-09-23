@@ -10,6 +10,7 @@ A Spring Boot 3 backend for the WebTools Kanban board application. This service 
 - **Build Tool**: Maven
 - **Database**: PostgreSQL 17
 - **Migrations**: Flyway
+- **Bot Protection**: Cloudflare Turnstile
 - **Auth**: Spring Security (BCrypt password hashing) + JWT (jjwt) for local signup/login
 - **API Documentation**: SpringDoc OpenAPI (Swagger UI)
 - **Observability**: Spring Boot Actuator, Micrometer Tracing (Brave, Zipkin)
@@ -43,8 +44,10 @@ Once the application is running, you can access the interactive API documentatio
 `http://localhost:8080/api/v1`
 
 ### Authentication
-- `POST /auth/signup`: Register a new local user (email + password) and receive a JWT.
-- `POST /auth/login`: Authenticate a local user and receive a JWT.
+- `POST /auth/signup`: Register a new local user (email + password). **Requires a valid Cloudflare Turnstile token** to prevent bot registrations. Returns a JWT upon success.
+- `POST /auth/login`: Authenticate a local user. **Requires a valid Cloudflare Turnstile token** to prevent brute-force/bot attacks. Returns a JWT upon success.
+
+> **Bot Protection**: The `/auth` endpoints are protected by Cloudflare Turnstile. The backend validates the Turnstile token via `TurnstileService` by calling the Cloudflare siteverify API before processing authentication requests.
 
 > **Note**: this service does not currently validate the JWT on subsequent requests. Every
 > other endpoint identifies the caller via a trusted `X-User-Id` header, which is expected to
