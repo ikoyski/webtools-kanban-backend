@@ -18,6 +18,8 @@ public class RegisterRequest {
     private String password;
 
     @NotBlank
-    @NotNull 
+    @NotNull
     private String displayName;
+
+    private String cfTurnstileResponse;
 }

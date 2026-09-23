@@ -14,6 +14,8 @@ public class LoginRequest {
     private String email;
 
     @NotBlank
-    @NotNull 
+    @NotNull
     private String password;
+
+    private String cfTurnstileResponse;
 }
