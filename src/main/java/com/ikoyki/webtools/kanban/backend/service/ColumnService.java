@@ -64,6 +64,9 @@ public class ColumnService {
         for (ReorderColumnsRequest.ColumnPosition update : updates) {
             ColumnEntity column = columnRepository.findById(update.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Column not found: " + update.getId()));
+            if (!column.getBoard().getId().equals(first.getBoard().getId())) {
+                throw new com.ikoyki.webtools.kanban.backend.exception.BadRequestException("All columns must belong to the same board");
+            }
             column.setPosition(update.getPosition());
             columns.add(column);
         }

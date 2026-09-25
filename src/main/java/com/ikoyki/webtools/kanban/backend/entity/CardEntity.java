@@ -56,6 +56,12 @@ public class CardEntity {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
+    @Column(nullable = false)
+    private boolean archived = false;
+
+    @Column(name = "archived_at")
+    private OffsetDateTime archivedAt;
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = OffsetDateTime.now();

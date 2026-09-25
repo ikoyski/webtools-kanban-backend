@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -60,4 +61,21 @@ public class CardController {
         return ResponseEntity.ok(boardMapper.toCardResponse(card));
     }
 
+    @PostMapping("/{id}/archive")
+    public ResponseEntity<CardResponse> archiveCard(@AuthUser UUID currentUserId, @PathVariable UUID id) {
+        CardEntity card = cardService.archiveCard(id, currentUserId);
+        return ResponseEntity.ok(boardMapper.toCardResponse(card));
+    }
+
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<CardResponse> restoreCard(@AuthUser UUID currentUserId, @PathVariable UUID id) {
+        CardEntity card = cardService.restoreCard(id, currentUserId);
+        return ResponseEntity.ok(boardMapper.toCardResponse(card));
+    }
+
+    @GetMapping("/board/{boardId}/archived")
+    public ResponseEntity<List<CardResponse>> listArchivedCards(@AuthUser UUID currentUserId, @PathVariable UUID boardId) {
+        List<CardEntity> archived = cardService.listArchivedCards(boardId, currentUserId);
+        return ResponseEntity.ok(archived.stream().map(boardMapper::toCardResponse).toList());
+    }
 }
