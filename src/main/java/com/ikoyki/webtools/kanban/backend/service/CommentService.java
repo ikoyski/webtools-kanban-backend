@@ -43,7 +43,7 @@ public class CommentService {
 
         boardAccessService.requireAtLeast(card.getColumn().getBoard().getId(), userId, BoardRole.EDITOR);
 
-        CardCommentEntity comment = CardCommentEntity.builder().id(UUID.randomUUID()).cardId(cardId)
+        CardCommentEntity comment = CardCommentEntity.builder().cardId(cardId)
                 .userId(userId).content(request.getContent()).createdAt(OffsetDateTime.now()).build();
 
         CardCommentEntity saved = commentRepository.save(comment);
