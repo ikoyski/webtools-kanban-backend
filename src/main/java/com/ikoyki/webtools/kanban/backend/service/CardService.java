@@ -10,6 +10,8 @@ import com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Service
@@ -115,6 +117,33 @@ public class CardService {
         }
 
         return cardRepository.save(card);
+    }
+
+    @Transactional
+    public CardEntity archiveCard(UUID cardId, UUID userId) {
+        CardEntity card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found"));
+        boardAccessService.requireAtLeast(card.getColumn().getBoard().getId(), userId, BoardRole.EDITOR);
+
+        card.setArchived(true);
+        card.setArchivedAt(OffsetDateTime.now());
+        return cardRepository.save(card);
+    }
+
+    @Transactional
+    public CardEntity restoreCard(UUID cardId, UUID userId) {
+        CardEntity card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found"));
+        boardAccessService.requireAtLeast(card.getColumn().getBoard().getId(), userId, BoardRole.EDITOR);
+
+        card.setArchived(false);
+        card.setArchivedAt(null);
+        return cardRepository.save(card);
+    }
+
+    public List<CardEntity> listArchivedCards(UUID boardId, UUID userId) {
+        boardAccessService.requireMembership(boardId, userId);
+        return cardRepository.findByColumn_Board_IdAndArchivedTrue(boardId);
     }
 
     private void reindexCards(UUID columnId) {

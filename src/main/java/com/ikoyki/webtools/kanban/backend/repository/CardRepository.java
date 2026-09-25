@@ -11,6 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 public interface CardRepository extends JpaRepository<CardEntity, UUID> {
     List<CardEntity> findByColumnIdOrderByPositionAsc(UUID columnId);
 
+    List<CardEntity> findByColumn_Board_IdAndArchivedFalse(UUID boardId);
+
+    List<CardEntity> findByColumn_Board_IdAndArchivedTrue(UUID boardId);
+
     @Transactional
     void deleteByColumn_Board_Id(UUID boardId);
 }
