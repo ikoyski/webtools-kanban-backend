@@ -2,6 +2,8 @@ package com.ikoyki.webtools.kanban.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -14,6 +16,8 @@ import java.util.UUID;
 @Builder
 public class CardCommentEntity {
     @Id
+    @Generated(GenerationTime.INSERT)
+    @Column(updatable = false, insertable = false)
     private UUID id;
 
     @Column(name = "card_id", nullable = false)
@@ -25,6 +29,7 @@ public class CardCommentEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+    @Builder.Default
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 }

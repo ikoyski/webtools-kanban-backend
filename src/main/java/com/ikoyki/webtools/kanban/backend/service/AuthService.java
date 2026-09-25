@@ -9,11 +9,7 @@ import com.ikoyki.webtools.kanban.backend.exception.BadRequestException;
 import com.ikoyki.webtools.kanban.backend.exception.BadCredentialsException;
 import com.ikoyki.webtools.kanban.backend.repository.UserProviderRepository;
 import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
-import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
 import com.ikoyki.webtools.kanban.backend.security.JwtTokenProvider;
-import com.ikoyki.webtools.kanban.backend.service.TurnstileService;
-
-import lombok.RequiredArgsConstructor;
 
 import lombok.RequiredArgsConstructor;
 

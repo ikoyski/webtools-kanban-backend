@@ -64,12 +64,6 @@ public class BoardService {
         boardAccessService.requireMembership(id, userId);
         BoardEntity board = boardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
-
-        // We must filter out archived cards when loading the board's data
-        // Note: BoardEntity doesn't have a direct reference to cards,
-        // so the filtration happens at the CardRepository level when the
-        // frontend requests cards for columns.
-
         return board;
     }
 

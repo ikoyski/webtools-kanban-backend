@@ -53,8 +53,10 @@ public class BoardMapper {
                         if (card == null)
                             continue;
 
-                        CardResponse cardResponse = toCardResponse(card);
-                        cardMap.put(card.getId(), cardResponse);
+                        if (!card.isArchived()) {
+                            CardResponse cardResponse = toCardResponse(card);
+                            cardMap.put(card.getId(), cardResponse);
+                        }
                     }
                 }
             }
