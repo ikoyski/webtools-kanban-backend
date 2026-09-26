@@ -108,6 +108,8 @@ public class BoardMapper {
                 .position(card.getPosition())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
+                .archived(card.isArchived())
+                .archivedAt(card.getArchivedAt())
                 .build();
     }
 }

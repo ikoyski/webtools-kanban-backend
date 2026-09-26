@@ -21,4 +21,6 @@ public class CardResponse {
     private Integer position;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private boolean archived;
+    private OffsetDateTime archivedAt;
 }
