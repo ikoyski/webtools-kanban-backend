@@ -58,6 +58,33 @@ Spring Boot 3 backend for a Kanban board application.
   someone else). Removing yourself from a board ("leave") does not require a role check, but
   removing/demoting the *last* `OWNER` on a board is always blocked.
 
+## Rich Text (`description` / comment `content`)
+- `CardEntity.description` and `CardCommentEntity.content` are plain `TEXT` columns. This
+  service treats them as opaque strings end-to-end: no HTML escaping or sanitization in
+  `CardService`/`CommentService`, no transformation in `BoardMapper`. What goes in via
+  `PATCH`/`POST` is exactly what comes back out in the JSON response — the one exception is the
+  length cap below, which rejects oversized input but never alters valid input.
+- The frontend writes a small, fixed subset of HTML here (its Quill editor's output, cleaned up
+  client-side) and sanitizes with DOMPurify on every render — see the frontend's `CLAUDE.md`.
+  **Do not add server-side sanitization that assumes a particular HTML shape** (e.g. stripping
+  tags, enforcing the frontend's allow-list) without checking both repos' `CLAUDE.md` first —
+  the frontend's sanitize step is what actually protects renders, and it runs independently of
+  whatever is in the database.
+- If you add a new client of this API (e.g. an MCP server) that writes to these fields, it may
+  write plain text or its own HTML — this service won't object either way — but whoever renders
+  the value as HTML is responsible for sanitizing it first, since this service doesn't.
+- **Size limit**: `CreateCardRequest`/`UpdateCardRequest#description` and
+  `CommentRequest#content` carry `@Size(max = ...)` — 50,000 chars for a description, 10,000
+  for a comment. `CardController#updateCardEntity` and `CommentController#addComment` must keep
+  `@Valid` on the request body for this to fire (both were missing it before this limit was
+  added; `createCardEntity` and `moveCardEntity` already had it). A violation is caught by the
+  existing `GlobalExceptionHandler#handleValidation` and returned as `400` with a
+  `{"description": "size must be..."}`-shaped body, same as any other `@Size`/`@NotBlank`
+  failure in this codebase — no new error-handling path was added. These limits are purely
+  defensive (oversized-payload protection); they are not a statement about what counts as valid
+  HTML, and raising them is safe at any time since the DB column is unbounded `TEXT`.
+  Covered by `CardContentSizeValidationTest`.
+
 ## Coding Guidelines
 - **Naming**:
     - Entities: `PascalCase` (e.g., `BoardEntity`, `ColumnEntity`, `CardEntity`)

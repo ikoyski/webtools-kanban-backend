@@ -4,6 +4,7 @@ import com.ikoyki.webtools.kanban.backend.dto.request.CommentRequest;
 import com.ikoyki.webtools.kanban.backend.dto.response.CommentResponse;
 import com.ikoyki.webtools.kanban.backend.security.AuthUser;
 import com.ikoyki.webtools.kanban.backend.service.CommentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ public class CommentController {
 
     @PostMapping("/card/{cardId}")
     public ResponseEntity<CommentResponse> addComment(@AuthUser UUID currentUserId, @PathVariable UUID cardId,
-            @RequestBody CommentRequest request) {
+            @Valid @RequestBody CommentRequest request) {
         return ResponseEntity.ok(commentService.addComment(cardId, request, currentUserId));
     }
 

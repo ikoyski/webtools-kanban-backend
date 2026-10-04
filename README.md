@@ -74,6 +74,9 @@ Once the application is running, you can access the interactive API documentatio
 - `PATCH /cards/{id}`: Update a card.
 - `PATCH /cards/{id}/move`: Move a card within or across columns.
 - `DELETE /cards/{id}`: Delete a card.
+- `GET /comments/card/{cardId}`: List comments on a card, oldest first.
+- `POST /comments/card/{cardId}`: Add a comment to a card.
+- `DELETE /comments/{id}`: Delete a comment (`OWNER`, or the comment's own author).
 
 ### Roles & Permissions
 Every board has members with one of three roles: `VIEWER`, `EDITOR`, `OWNER` (in ascending
@@ -102,6 +105,30 @@ The project is automatically analyzed for bugs, vulnerabilities, and code smells
 - `board_member`: User-to-board membership with roles (OWNER, EDITOR, VIEWER).
 - `column_entity`: Columns belonging to a board, ordered by `position`.
 - `card`: Cards belonging to a column, ordered by `position`. Labels are stored as `JSONB`.
+- `card_comment`: Comments on a card, ordered by `created_at`.
+
+## 📝 Rich Text (`description` / comment `content`)
+
+`card.description` and `card_comment.content` are unbounded `TEXT` columns. The API stores and
+returns them as opaque strings — there is no server-side sanitization or HTML escaping of
+either field, and none is planned here. The official frontend writes a small, fixed subset of
+HTML to these fields (produced by its Quill-based WYSIWYG editor) and sanitizes with DOMPurify
+on every render, client-side — see the frontend's `CLAUDE.md`/`README.md`. Any other client
+(another UI, an MCP agent, a script hitting the API directly) is free to write plain text or its
+own HTML here, but **must sanitize before rendering it as HTML**, since this service will echo
+back whatever was stored.
+
+The only server-side check is a request-level length cap, enforced via Bean Validation
+(`@Size`, returns `400` with a field-error body on violation — see `CreateCardRequest` /
+`UpdateCardRequest` / `CommentRequest`):
+
+| Field | Max length |
+|---|---|
+| Card `description` | 50,000 characters |
+| Comment `content` | 10,000 characters |
+
+This exists only to reject pathologically large payloads; it's an application-layer guard, not
+a DB constraint, and has nothing to do with HTML validity.
 
 ## 🩺 Health Check
 Check the service status:

@@ -36,7 +36,7 @@ public class CardController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<CardResponse> updateCardEntity(@AuthUser UUID currentUserId, @PathVariable UUID id,
-            @RequestBody UpdateCardRequest request) {
+            @Valid @RequestBody UpdateCardRequest request) {
         CardEntity card = cardService.updateCard(
                 id,
                 request.getTitle(),
