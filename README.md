@@ -45,7 +45,10 @@ Once the application is running, you can access the interactive API documentatio
 
 ### Authentication
 - `POST /auth/signup`: Register a new local user (email + password). **Requires a valid Cloudflare Turnstile token** to prevent bot registrations. Returns a JWT upon success.
-- `POST /auth/login`: Authenticate a local user. **Requires a valid Cloudflare Turnstile token** to prevent brute-force/bot attacks. Returns a JWT upon success.
+    - `POST /auth/login`: Authenticate a local user. **Requires a valid Cloudflare Turnstile token** to prevent brute-force/bot attacks. Returns a JWT upon success.
+    - `PATCH /auth/password`: Change password for the current authenticated user.
+    - `POST /auth/forgot-password`: Request a password reset link via email. **Requires a valid Cloudflare Turnstile token**.
+    - `POST /auth/reset-password`: Reset password using a secure token from an email.
 
 > **Bot Protection**: The `/auth` endpoints are protected by Cloudflare Turnstile. The backend validates the Turnstile token via `TurnstileService` by calling the Cloudflare siteverify API before processing authentication requests.
 

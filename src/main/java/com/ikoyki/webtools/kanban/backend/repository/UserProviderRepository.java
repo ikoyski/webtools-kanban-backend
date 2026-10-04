@@ -12,4 +12,6 @@ public interface UserProviderRepository extends JpaRepository<UserProviderEntity
 
     // User for Traditional Local Login
     Optional<UserProviderEntity> findByProviderTypeAndUserEmail(String providerType, String email);
+
+    Optional<UserProviderEntity> findByUserAndProviderType(com.ikoyki.webtools.kanban.backend.entity.UserEntity user, String providerType);
 }

@@ -10,7 +10,7 @@ Spring Boot 3 backend for a Kanban board application.
 - **Quality Analysis**: Monitored via SonarCloud for bugs, vulnerabilities, and code smells.
 - **Schema Management**: Flyway
 - **API**: RESTful, versioned at `/api/v1` (Supports multi-board RBAC: OWNER, EDITOR, VIEWER)
-- **Auth**: BCrypt password hashing (Spring Security's `PasswordEncoder`) + JWT issuance (`jjwt`).
+- **Auth**: BCrypt password hashing (Spring Security's `PasswordEncoder`) + JWT issuance (`jjwt`). Supports local signup, login, password changes, and secure "forgot password" reset flows.
 - **Bot Protection**: Cloudflare Turnstile verification implemented in `TurnstileService` for all `/v1/auth/*` endpoints.
 - **Package**: `com.ikoyki.webtools.kanban.backend`
 

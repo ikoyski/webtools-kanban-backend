@@ -1,14 +1,19 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
+import com.ikoyki.webtools.kanban.backend.dto.request.ChangePasswordRequest;
+import com.ikoyki.webtools.kanban.backend.dto.request.ForgotPasswordRequest;
 import com.ikoyki.webtools.kanban.backend.dto.request.LoginRequest;
 import com.ikoyki.webtools.kanban.backend.dto.request.RegisterRequest;
+import com.ikoyki.webtools.kanban.backend.dto.request.ResetPasswordRequest;
 import com.ikoyki.webtools.kanban.backend.dto.response.AuthResponse;
 import com.ikoyki.webtools.kanban.backend.entity.UserEntity;
 import com.ikoyki.webtools.kanban.backend.entity.UserProviderEntity;
+import com.ikoyki.webtools.kanban.backend.entity.PasswordResetTokenEntity;
 import com.ikoyki.webtools.kanban.backend.exception.BadRequestException;
 import com.ikoyki.webtools.kanban.backend.exception.BadCredentialsException;
 import com.ikoyki.webtools.kanban.backend.repository.UserProviderRepository;
 import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
+import com.ikoyki.webtools.kanban.backend.repository.PasswordResetTokenRepository;
 import com.ikoyki.webtools.kanban.backend.security.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -24,9 +29,11 @@ import java.util.*;
 public class AuthService {
     private final UserRepository userRepository;
     private final UserProviderRepository providerRepository;
+    private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder; // BCryptPasswordEncoder bean
     private final JwtTokenProvider jwtTokenProvider; // Your custom JWT generator
     private final TurnstileService turnstileService;
+    private final EmailService emailService;
 
     // 1. TRADITIONAL SIGNUP
     @Transactional
@@ -83,5 +90,63 @@ public class AuthService {
                 .avatarUrl(user.getAvatarUrl())
                 .settings(Map.of("theme", "light"))
                 .build();
+    }
+
+    @Transactional
+    public void changePassword(UserEntity user, ChangePasswordRequest request) {
+        UserProviderEntity provider = providerRepository.findByUserAndProviderType(user, "LOCAL")
+                .orElseThrow(() -> new BadRequestException("Password change is only available for local accounts"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), provider.getPasswordHash())) {
+            throw new BadCredentialsException("Incorrect current password");
+        }
+
+        if (request.getOldPassword().equals(request.getNewPassword())) {
+            throw new BadRequestException("New password must be different from the old password");
+        }
+
+        provider.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        providerRepository.save(provider);
+    }
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        if (!turnstileService.verify(request.getTurnstileToken(), "unknown")) {
+            throw new BadRequestException("Invalid Turnstile token");
+        }
+
+        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            tokenRepository.deleteByUser(user);
+
+            String token = UUID.randomUUID().toString();
+            PasswordResetTokenEntity resetToken = PasswordResetTokenEntity.builder()
+                    .token(token)
+                    .user(user)
+                    .expiryDate(LocalDateTime.now().plusHours(1))
+                    .build();
+
+            tokenRepository.save(resetToken);
+            emailService.sendPasswordResetEmail(user, token);
+        });
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        PasswordResetTokenEntity resetToken = tokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
+
+        if (resetToken.isExpired()) {
+            tokenRepository.delete(resetToken);
+            throw new BadRequestException("Reset token has expired");
+        }
+
+        UserEntity user = resetToken.getUser();
+        UserProviderEntity provider = providerRepository.findByUserAndProviderType(user, "LOCAL")
+                .orElseThrow(() -> new BadRequestException("Password reset is only available for local accounts"));
+
+        provider.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        providerRepository.save(provider);
+
+        tokenRepository.delete(resetToken);
     }
 }
