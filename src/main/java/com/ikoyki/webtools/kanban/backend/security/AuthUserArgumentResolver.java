@@ -44,7 +44,7 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
         if (userIdHeader == null || userIdHeader.isBlank()) {
             log.warn("Missing X-User-Id header");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing X-User-Id header");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing header");
         }
 
         try {
@@ -62,7 +62,7 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
                     });
         } catch (IllegalArgumentException e) {
             log.warn("Malformed X-User-Id header: {}", userIdHeader);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Malformed X-User-Id header");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Malformed header");
         }
     }
 }

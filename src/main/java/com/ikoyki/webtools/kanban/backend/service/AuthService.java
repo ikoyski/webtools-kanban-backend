@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Service
@@ -122,7 +123,7 @@ public class AuthService {
             PasswordResetTokenEntity resetToken = PasswordResetTokenEntity.builder()
                     .token(token)
                     .user(user)
-                    .expiryDate(LocalDateTime.now().plusHours(1))
+                    .expiryDate(OffsetDateTime.now().plusHours(1))
                     .build();
 
             tokenRepository.save(resetToken);

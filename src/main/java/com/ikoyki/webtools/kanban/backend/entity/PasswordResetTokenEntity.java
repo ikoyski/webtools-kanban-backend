@@ -2,8 +2,11 @@ package com.ikoyki.webtools.kanban.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
+
+import java.time.OffsetDateTime;
+import java.util.*;
 
 @Entity
 @Table(name = "password_reset_token")
@@ -13,7 +16,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PasswordResetTokenEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Generated(GenerationTime.INSERT)
+    @Column(updatable = false, insertable = false)
     private UUID id;
 
     @Column(nullable = false, unique = true)
@@ -24,9 +28,9 @@ public class PasswordResetTokenEntity {
     private UserEntity user;
 
     @Column(nullable = false)
-    private LocalDateTime expiryDate;
+    private OffsetDateTime expiryDate;
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(this.expiryDate);
+        return OffsetDateTime.now().isAfter(this.expiryDate);
     }
 }

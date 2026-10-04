@@ -7,6 +7,7 @@ import com.ikoyki.webtools.kanban.backend.dto.request.RegisterRequest;
 import com.ikoyki.webtools.kanban.backend.dto.request.ResetPasswordRequest;
 import com.ikoyki.webtools.kanban.backend.dto.response.AuthResponse;
 import com.ikoyki.webtools.kanban.backend.entity.UserEntity;
+import com.ikoyki.webtools.kanban.backend.service.AuthService;
 import com.ikoyki.webtools.kanban.backend.security.AuthUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -21,13 +22,15 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signupLocal(@RequestBody RegisterRequest request, HttpServletRequest servletRequest) {
+    public ResponseEntity<AuthResponse> signupLocal(@RequestBody RegisterRequest request,
+            HttpServletRequest servletRequest) {
         String remoteIp = servletRequest.getRemoteAddr();
         return ResponseEntity.ok(authService.registerLocal(request, remoteIp));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> loginLocal(@RequestBody LoginRequest request, HttpServletRequest servletRequest) {
+    public ResponseEntity<AuthResponse> loginLocal(@RequestBody LoginRequest request,
+            HttpServletRequest servletRequest) {
         String remoteIp = servletRequest.getRemoteAddr();
         return ResponseEntity.ok(authService.loginLocal(request, remoteIp));
     }
@@ -35,8 +38,7 @@ public class AuthController {
     @PatchMapping("/password")
     public ResponseEntity<Void> changePassword(
             @AuthUser UserEntity user,
-            @Valid @RequestBody ChangePasswordRequest request
-    ) {
+            @Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(user, request);
         return ResponseEntity.noContent().build();
     }
