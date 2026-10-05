@@ -96,7 +96,11 @@ public class AuthService {
     }
 
     @Transactional
-    public void changePassword(UserEntity user, ChangePasswordRequest request) {
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
+        // Load the managed entity: query parameters must be persistent instances, not detached/blank ones.
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
         UserProviderEntity provider = providerRepository.findByUserAndProviderType(user, "LOCAL")
                 .orElseThrow(() -> new BadRequestException("Password change is only available for local accounts"));
 

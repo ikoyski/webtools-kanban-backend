@@ -6,7 +6,6 @@ import com.ikoyki.webtools.kanban.backend.dto.request.LoginRequest;
 import com.ikoyki.webtools.kanban.backend.dto.request.RegisterRequest;
 import com.ikoyki.webtools.kanban.backend.dto.request.ResetPasswordRequest;
 import com.ikoyki.webtools.kanban.backend.dto.response.AuthResponse;
-import com.ikoyki.webtools.kanban.backend.entity.UserEntity;
 import com.ikoyki.webtools.kanban.backend.service.AuthService;
 import com.ikoyki.webtools.kanban.backend.security.AuthUser;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +13,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -37,9 +38,9 @@ public class AuthController {
 
     @PatchMapping("/password")
     public ResponseEntity<Void> changePassword(
-            @AuthUser UserEntity user,
+            @AuthUser UUID currentUserId,
             @Valid @RequestBody ChangePasswordRequest request) {
-        authService.changePassword(user, request);
+        authService.changePassword(currentUserId, request);
         return ResponseEntity.noContent().build();
     }
 
