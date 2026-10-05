@@ -96,6 +96,23 @@ order of privilege).
 
 A board must always have at least one `OWNER`; demoting or removing the last owner is blocked.
 
+## ✉️ Email (service-to-service)
+Emails (currently the password-reset link) are sent by calling the `webtools-email` microservice
+**directly** through Eureka + Spring Cloud LoadBalancer — not back out through the API gateway.
+Delivery is best-effort: the send runs on a small bounded executor after the DB transaction
+commits, and a failure is logged but never fails the request. Settings (Config Server or env):
+
+| Property | Default | Purpose |
+|---|---|---|
+| `webtools.email.base-url` | `http://webtools-email` | Eureka application name of the Email service |
+| `webtools.email.api-key` | _(unset)_ | Sent as `X-Internal-Api-Key` when set |
+| `webtools.email.connect-timeout` | `2s` | Connect timeout |
+| `webtools.email.read-timeout` | `5s` | Read timeout |
+| `webtools.frontend.reset-password-url` | `https://kanban.webtools.io/reset-password` | Base URL of the reset link in the email |
+
+The request path/payload (`POST /email/v1` with `{recipient, msgBody, subject}`) is defined in
+`client/EmailClient` and `dto/request/SendEmailRequest`.
+
 ## 🛡️ Quality Assurance
 
 The project is automatically analyzed for bugs, vulnerabilities, and code smells as part of the CI pipeline via GitHub Actions. You can view the current quality status and detailed reports on the [SonarCloud Summary Page](https://sonarcloud.io/summary/overall?id=ikoyski_webtools-kanban-backend).

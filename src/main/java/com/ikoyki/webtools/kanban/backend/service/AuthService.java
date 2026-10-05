@@ -11,6 +11,7 @@ import com.ikoyki.webtools.kanban.backend.entity.UserProviderEntity;
 import com.ikoyki.webtools.kanban.backend.entity.PasswordResetTokenEntity;
 import com.ikoyki.webtools.kanban.backend.exception.BadRequestException;
 import com.ikoyki.webtools.kanban.backend.exception.BadCredentialsException;
+import com.ikoyki.webtools.kanban.backend.event.PasswordResetRequestedEvent;
 import com.ikoyki.webtools.kanban.backend.repository.UserProviderRepository;
 import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
 import com.ikoyki.webtools.kanban.backend.repository.PasswordResetTokenRepository;
@@ -18,6 +19,7 @@ import com.ikoyki.webtools.kanban.backend.security.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +36,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder; // BCryptPasswordEncoder bean
     private final JwtTokenProvider jwtTokenProvider; // Your custom JWT generator
     private final TurnstileService turnstileService;
-    private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 1. TRADITIONAL SIGNUP
     @Transactional
@@ -127,7 +129,7 @@ public class AuthService {
                     .build();
 
             tokenRepository.save(resetToken);
-            emailService.sendPasswordResetEmail(user, token);
+            eventPublisher.publishEvent(new PasswordResetRequestedEvent(user.getEmail(), token));
         });
     }
 

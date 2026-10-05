@@ -110,3 +110,13 @@ Spring Boot 3 backend for a Kanban board application.
       demoting/removing the last board `OWNER`).
     - Return `403 Forbidden` (`ForbiddenBoardAccessException`) when a role check fails.
     - Return `400 Bad Request` for validation/import errors.
+
+## Email
+- Outgoing email goes through `EmailClient` (declarative `@HttpExchange`, `POST /email/v1`) to the `webtools-email`
+  microservice via Eureka (`@LoadBalanced RestClient.Builder` in `EmailClientConfig`). Never route this
+  back through the API gateway.
+- Do **not** mark the shared `RestTemplate` bean (used by `TurnstileService` for Cloudflare) as
+  `@LoadBalanced`; the email client has its own builder.
+- Send path is best-effort: services publish an event (e.g. `PasswordResetRequestedEvent`) inside
+  their transaction; `EmailService` handles it `@Async` + `AFTER_COMMIT`. Never log tokens or bodies.
+  If delivery must become reliable, replace this with an outbox table + scheduled dispatcher.
