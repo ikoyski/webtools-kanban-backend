@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+import org.springframework.core.task.support.ContextPropagatingTaskDecorator;
 
 import java.net.http.HttpClient;
 
@@ -69,6 +70,7 @@ public class EmailClientConfig {
                 .maxPoolSize(4)
                 .queueCapacity(100)
                 .threadNamePrefix("email-")
+                .taskDecorator(new ContextPropagatingTaskDecorator())
                 .build();
         executor.setRejectedExecutionHandler((task, pool) ->
                 log.warn("Email queue is full; dropping an outgoing email"));
