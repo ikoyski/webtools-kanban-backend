@@ -24,7 +24,7 @@ public class EmailService {
     private final String resetPasswordUrl;
 
     public EmailService(EmailClient emailClient,
-                        @Value("${webtools.frontend.reset-password-url}")
+                        @Value("${kanban.frontend.reset-password-url}")
                         String resetPasswordUrl) {
         this.emailClient = emailClient;
         this.resetPasswordUrl = resetPasswordUrl;
