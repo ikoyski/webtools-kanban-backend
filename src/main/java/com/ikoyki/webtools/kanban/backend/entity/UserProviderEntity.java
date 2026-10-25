@@ -25,10 +25,10 @@ public class UserProviderEntity {
     private UserEntity user;
 
     @Column(nullable = false)
-    private String providerType; // "LOCAL", "GOOGLE"
+    private String providerType; // "GOOGLE" today; "MICROSOFT", "GITHUB", ... later
 
-    private String providerId; // OAuth 'sub' claim ID
-    private String passwordHash; // BCrypt hash for LOCAL
+    @Column(nullable = false)
+    private String providerId; // the provider's stable subject id ("sub"), never the email
 
     @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)

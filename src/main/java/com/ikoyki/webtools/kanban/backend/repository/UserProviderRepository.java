@@ -7,11 +7,8 @@ import java.util.*;
 
 @Repository
 public interface UserProviderRepository extends JpaRepository<UserProviderEntity, UUID> {
-    // Used for OAuth Login
+    // Resolves an external identity (provider + subject) to its user
     Optional<UserProviderEntity> findByProviderTypeAndProviderId(String providerType, String providerId);
 
-    // User for Traditional Local Login
-    Optional<UserProviderEntity> findByProviderTypeAndUserEmail(String providerType, String email);
 
-    Optional<UserProviderEntity> findByUserAndProviderType(com.ikoyki.webtools.kanban.backend.entity.UserEntity user, String providerType);
 }

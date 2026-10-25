@@ -28,8 +28,7 @@ public class EmailClientConfig {
     static final String EMAIL_EXECUTOR = "emailExecutor";
 
     /**
-     * Load-balanced builder: lets "http://webtools-email" resolve through Eureka. Kept separate from the plain
-     * {@code RestTemplate} bean used for Cloudflare Turnstile, which must NOT be load-balanced.
+     * Load-balanced builder: lets "http://webtools-email" resolve through Eureka.
      * Going through {@code RestClientBuilderConfigurer} keeps Boot's tracing/observation customizers applied,
      * so trace ids propagate to the Email service (Zipkin).
      */

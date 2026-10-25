@@ -1,6 +1,6 @@
 # WebTools Kanban Backend
 
-REST API for the WebTools Kanban app: multiple boards per user, board-level roles (`VIEWER` / `EDITOR` / `OWNER`), ordered columns and cards, card comments and archiving, whole-board import/export, and local email/password accounts with Cloudflare Turnstile bot protection.
+REST API for the WebTools Kanban app: multiple boards per user, board-level roles (`VIEWER` / `EDITOR` / `OWNER`), ordered columns and cards, card comments and archiving, whole-board import/export, and an identity API for the auth server (Google sign-in today, more providers later). It has no passwords or tokens of its own.
 
 It is one service in a small microservice setup. It registers with Eureka, pulls its configuration from a Spring Cloud Config Server, and **expects an API gateway in front of it** that validates JWTs and forwards the caller's identity in an `X-User-Id` header. See [Trust model](#trust-model) before exposing it anywhere.
 
@@ -28,7 +28,7 @@ It is one service in a small microservice setup. It registers with Eureka, pulls
 | Framework | Spring Boot 3.4.2 (Web, Data JPA, Validation, Actuator) |
 | Service infra | Spring Cloud 2024.0.0: Eureka client, Config client, LoadBalancer |
 | Database | PostgreSQL 17, Flyway migrations, `JSONB` for card labels |
-| Auth | BCrypt (`PasswordEncoder`) and JWT issuance via `jjwt` 0.12.6; Cloudflare Turnstile on public auth endpoints |
+| Identity | External sign-in (Google today) handled by a separate auth server; this service only maps external identities to users. No passwords, no JWT handling |
 | API docs | springdoc-openapi 2.8.5 (Swagger UI) |
 | Observability | Actuator, Micrometer Tracing (Brave) with Zipkin reporter |
 | Quality | JUnit 5 + Mockito, JaCoCo, SonarCloud in CI |
@@ -37,9 +37,10 @@ It is one service in a small microservice setup. It registers with Eureka, pulls
 
 This service **does not validate JWTs** on incoming requests. There is no security filter chain and no JWT filter.
 
-- `POST /v1/auth/signup` and `POST /v1/auth/login` issue a JWT, but nothing here checks it afterwards.
+- Sign-in is handled by a separate auth server, and tokens are validated by the gateway. This service never sees a password or a token.
 - Every other endpoint identifies the caller from the `X-User-Id` request header (a UUID). The header is checked only for being well-formed and matching a row in `user_entity`. It is not proof that the caller *is* that user.
-- The gateway is expected to validate the JWT and set `X-User-Id` (and `X-User-Email`, which is only logged).
+- The gateway is expected to validate the token and set `X-User-Id` (and `X-User-Email`, which is only logged).
+- The auth server calls `/internal/v1/users/**` directly (not through the gateway), authenticated by the shared `X-Internal-Key`.
 
 **If this service is reachable without going through the gateway, anyone can impersonate any user by sending a forged header.** Restrict it at the network level (private subnet, security group, internal-only ingress). Application code can't fix this. Don't "fix" it by adding JWT checks to individual controllers; changing the model is an architecture decision.
 
@@ -61,7 +62,7 @@ This starts `postgres:17-alpine` on `localhost:5432` with database `kanban`, use
 
 ### 2. Provide configuration
 
-The repository deliberately contains **no datasource URL, JWT secret, Turnstile secret or Eureka settings**; they come from the Config Server (or environment). With no config in place the app will not start. Pick one:
+The repository deliberately contains **no datasource URL, internal API key or Eureka settings**; they come from the Config Server (or environment). With no config in place the app will not start. Pick one:
 
 **Option A: Config Server.** The default `application.yaml` imports `optional:configserver:http://localhost:8089` with basic-auth `user` / `password`. Run a Config Server there that serves the properties in [Configuration](#configuration) for application `webtools-kanban-backend`.
 
@@ -71,11 +72,7 @@ The repository deliberately contains **no datasource URL, JWT secret, Turnstile 
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/kanban
 export SPRING_DATASOURCE_USERNAME=kanban
 export SPRING_DATASOURCE_PASSWORD=kanban_dev_only
-export SECURITY_JWT_TOKEN_SECRET_KEY='replace-with-at-least-32-random-bytes!!'
-export SECURITY_JWT_TOKEN_EXPIRE_LENGTH=3600000
-export CLOUDFLARE_TURNSTILE_SECRET=1x0000000000000000000000000000000AA   # Cloudflare's "always passes" test secret
-export CLOUDFLARE_TURNSTILE_SITEVERIFY_URL=https://challenges.cloudflare.com/turnstile/v0/siteverify
-export WEBTOOLS_FRONTEND_RESET_PASSWORD_URL=http://localhost:5173/reset-password
+export INTERNAL_API_KEY='replace-with-a-long-random-string'   # shared with the auth server
 export EUREKA_CLIENT_ENABLED=false
 ```
 
@@ -114,11 +111,7 @@ Properties this service needs:
 | Property | Required | Purpose |
 |---|---|---|
 | `spring.datasource.url` / `username` / `password` | yes | PostgreSQL connection |
-| `security.jwt.token.secret-key` | yes | HMAC key for signing JWTs; must be at least 32 bytes |
-| `security.jwt.token.expire-length` | yes | JWT lifetime in **milliseconds** |
-| `cloudflare.turnstile.secret` | yes | Turnstile server secret |
-| `cloudflare.turnstile.siteverify-url` | yes | Turnstile siteverify endpoint |
-| `webtools.frontend.reset-password-url` | yes (no default) | Base URL of the link in password-reset emails (`?token=...` is appended) |
+| `internal.api-key` | yes (no default) | Shared secret the auth server sends as `X-Internal-Key` to `/internal/**`; use a long random value |
 | `webtools.email.base-url` | no | Eureka name of the email service; default `http://webtools-email` |
 | `webtools.email.api-key` | no | Sent as `X-Internal-Api-Key` when set |
 | `webtools.email.connect-timeout` / `read-timeout` | no | Defaults `2s` / `5s` |
@@ -126,19 +119,24 @@ Properties this service needs:
 
 ## API reference
 
-All paths below are relative to the service root (e.g. `/v1/boards`). Except for the public auth endpoints, every request needs an `X-User-Id` header. Interactive docs are in Swagger UI.
+All paths below are relative to the service root (e.g. `/v1/boards`). Every `/v1` request needs an `X-User-Id` header. Interactive docs are in Swagger UI.
 
-### Auth: `/v1/auth`
+### Users: `/v1/users`
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/signup` | Body: `email`, `password`, `displayName`, `turnstileToken`. Turnstile-verified. Returns `{token, email, displayName, avatarUrl, settings}` |
-| POST | `/login` | Body: `email`, `password`, `turnstileToken`. Turnstile-verified. Same response |
-| PATCH | `/password` | Needs `X-User-Id`. Body: `oldPassword`, `newPassword` (min 8 chars). `204` |
-| POST | `/forgot-password` | Body: `email`, `turnstileToken`. Turnstile-verified. Always `202`, whether or not the account exists |
-| POST | `/reset-password` | Body: `token`, `newPassword`. `200` |
+| GET | `/me` | Needs `X-User-Id`. Returns `{id, email, displayName, avatarUrl}` |
 
-Password-reset tokens are random UUIDs valid for 1 hour; requesting a new one deletes the user's earlier tokens.
+### Internal (auth server only): `/internal/v1/users`
+
+Not under `/v1`, so the gateway does not route it. Every call needs `X-Internal-Key`; without it the answer is `401`.
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/federated` | Body: `provider`, `subject`, `email`, `emailVerified`, `displayName`, `avatarUrl`. Finds the user for that identity or creates it on first sign-in. `200 {id, email}`, `400`, `403 {"error":"email_not_verified"}`, `409 {"error":"email_in_use"}` |
+| POST | `/lookup` | Body: `id` or `email`. `200 {id, email}` or `404` |
+
+An identity is `(provider, subject)`; the email is never used to identify a person, and a new identity whose email already belongs to another user is refused rather than merged. Accepted providers are listed in `InternalUserService.ALLOWED_PROVIDERS` (`GOOGLE`).
 
 ### Boards: `/v1/boards`
 
@@ -223,15 +221,14 @@ Flyway migrations in `src/main/resources/db/migration` (`V1`–`V6`).
 | Table | Purpose |
 |---|---|
 | `user_entity` | Users: unique `email`, `display_name`, `avatar_url` |
-| `user_provider` | Auth identities per user; `LOCAL` rows hold the BCrypt `password_hash` (`provider_id` is reserved for OAuth providers) |
+| `user_provider` | External identities per user: `provider_type` (`GOOGLE`) and the provider's stable subject in `provider_id`; unique per `(provider_type, provider_id)` and per `(user_id, provider_type)` |
 | `board` | Board name, `created_by`, `created_at` |
 | `board_member` | `(board_id, user_id)` unique, `role` in `OWNER`/`EDITOR`/`VIEWER` |
 | `column_entity` | Columns of a board, ordered by integer `position` |
 | `card` | Cards of a column: `description`, `priority`, `due_date`, `labels` (`JSONB` array of strings), `position`, `archived`, `archived_at` |
 | `card_comment` | Comments on a card, ordered by `created_at` |
-| `password_reset_token` | One-hour reset tokens |
 
-Primary keys default to a `uuidv7()` PL/pgSQL function defined in `V1` (which also enables `pgcrypto`). Deleting a board cascades to its columns, cards and comments.
+Primary keys default to a `uuidv7()` PL/pgSQL function defined in `V1` (which also enables `pgcrypto`). `V1` is a single flattened migration, so start from an **empty database**; a database that already ran the older `V1`–`V6` must be dropped and recreated. Deleting a board cascades to its columns, cards and comments.
 
 ## Board import and export
 
@@ -268,9 +265,7 @@ This is an application-layer guard against oversized payloads, not a DB constrai
 
 ## Email
 
-Currently only the password-reset email. The service calls the `webtools-email` microservice **directly** via Eureka and Spring Cloud LoadBalancer (not back through the gateway): `POST /email/v1` with `{recipient, msgBody, subject}` (see `client/EmailClient` and `SendEmailRequest`).
-
-Delivery is best-effort. `AuthService` publishes a `PasswordResetRequestedEvent` inside its transaction; `EmailService` handles it asynchronously after commit on a small bounded pool (2–4 threads, queue of 100, overflow is dropped and logged). Failures are logged and never fail the request. Settings are listed under [Configuration](#configuration).
+Nothing sends email at the moment; the password-reset flow was removed together with the password login. The `webtools-email` client is kept for future features (for example invitations): the service calls it **directly** via Eureka and Spring Cloud LoadBalancer (not back through the gateway): `POST /email/v1` with `{recipient, msgBody, subject}` (see `client/EmailClient` and `SendEmailRequest`). Settings are listed under [Configuration](#configuration).
 
 ## Testing, CI and Docker
 
@@ -296,12 +291,11 @@ src/main/java/com/ikoyki/webtools/kanban/backend
 ├── entity/       JPA entities and enums (BoardRole, Priority)
 ├── dto/          request/ and response/ records and beans
 ├── mapper/       BoardMapper (entities → normalized responses)
-├── security/     @AuthUser + resolver (X-User-Id), JwtTokenProvider
-├── config/       PasswordEncoder/RestTemplate, email client + executor
+├── security/     @AuthUser + resolver (X-User-Id)
+├── config/       email client + executor
 ├── client/       EmailClient (declarative HTTP client)
-├── event/        PasswordResetRequestedEvent
 └── exception/    domain exceptions and GlobalExceptionHandler
-src/main/resources/db/migration/   Flyway V1–V6
+src/main/resources/db/migration/   Flyway V1 (flattened)
 ```
 
 ## License
