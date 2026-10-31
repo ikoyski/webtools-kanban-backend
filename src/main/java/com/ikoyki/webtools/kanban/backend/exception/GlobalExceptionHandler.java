@@ -5,10 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +67,29 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
+        if (ex instanceof ResponseStatusException responseStatusException) {
+            HttpStatusCode status = responseStatusException.getStatusCode();
+            HttpStatus resolved = HttpStatus.resolve(status.value());
+            return ResponseEntity.status(status)
+                    .body(ErrorResponse.builder()
+                            .error(resolved == null ? "HTTP_" + status.value() : resolved.name())
+                            .message(responseStatusException.getReason() == null
+                                    ? status.toString() : responseStatusException.getReason())
+                            .build());
+        }
+
+        ResponseStatus responseStatus = AnnotatedElementUtils.findMergedAnnotation(
+                ex.getClass(), ResponseStatus.class);
+        if (responseStatus != null) {
+            HttpStatus status = responseStatus.code();
+            return ResponseEntity.status(status)
+                    .body(ErrorResponse.builder()
+                            .error(status.name())
+                            .message(responseStatus.reason().isBlank()
+                                    ? ex.getMessage() : responseStatus.reason())
+                            .build());
+        }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.builder()
                         .error("INTERNAL_SERVER_ERROR")
