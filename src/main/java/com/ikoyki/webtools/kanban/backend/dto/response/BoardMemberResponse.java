@@ -12,5 +12,6 @@ public class BoardMemberResponse {
     private UUID userId;
     private String email;
     private String displayName;
+    private String avatarUrl;
     private BoardRole role;
 }

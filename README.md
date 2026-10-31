@@ -154,7 +154,7 @@ An identity is `(provider, subject)`; the email is never used to identify a pers
 
 | Method | Path | Min role | Notes |
 |---|---|---|---|
-| GET | `/` | `VIEWER` | `{userId, email, displayName, role}` per member |
+| GET | `/` | `VIEWER` | `{userId, email, displayName, avatarUrl, role}` per member |
 | POST | `/` | `OWNER` | Body: `email`, `role`. The user must already have an account |
 | PATCH | `/{userId}` | `OWNER` | Body: `role` |
 | DELETE | `/{userId}` | `OWNER`, or yourself | Any member can leave; the last `OWNER` can't be removed or demoted |
