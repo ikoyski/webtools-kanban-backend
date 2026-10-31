@@ -27,6 +27,7 @@ public class BoardMemberController {
                 .userId(m.getUser().getId())
                 .email(m.getUser().getEmail())
                 .displayName(m.getUser().getDisplayName())
+                .avatarUrl(m.getUser().getAvatarUrl())
                 .role(m.getRole())
                 .build()).toList());
     }
@@ -39,6 +40,7 @@ public class BoardMemberController {
                 .userId(member.getUser().getId())
                 .email(member.getUser().getEmail())
                 .displayName(member.getUser().getDisplayName())
+                .avatarUrl(member.getUser().getAvatarUrl())
                 .role(member.getRole())
                 .build());
     }
@@ -51,6 +53,7 @@ public class BoardMemberController {
                 .userId(member.getUser().getId())
                 .email(member.getUser().getEmail())
                 .displayName(member.getUser().getDisplayName())
+                .avatarUrl(member.getUser().getAvatarUrl())
                 .role(member.getRole())
                 .build());
     }
