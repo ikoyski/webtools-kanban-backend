@@ -42,6 +42,9 @@ public class UserProvisioningService {
                        display_name = COALESCE(user_entity.display_name, EXCLUDED.display_name),
                        avatar_url = COALESCE(user_entity.avatar_url, EXCLUDED.avatar_url),
                        updated_at = now()
+                 WHERE user_entity.email IS DISTINCT FROM EXCLUDED.email
+                    OR (user_entity.display_name IS NULL AND EXCLUDED.display_name IS NOT NULL)
+                    OR (user_entity.avatar_url IS NULL AND EXCLUDED.avatar_url IS NOT NULL)
                 """, centralUserId, email.trim().toLowerCase(Locale.ROOT), clean(displayName, 100), clean(avatarUrl, 512));
 
         return users.findById(centralUserId)
