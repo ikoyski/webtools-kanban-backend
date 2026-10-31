@@ -95,3 +95,9 @@ Also: "last owner" violations throw `BadRequestException`, not a 409; `deleteCol
 - Don't log secrets, the internal key or email bodies, and don't route the email client through the gateway.
 - Don't merge accounts by email, and don't expose `/internal/**` through the gateway or the internet.
 - Don't commit real secrets: the compose password is dev-only; everything else belongs in Config Server or env.
+
+
+### Board member profile responses
+
+- The board members API response includes `avatarUrl` alongside `userId`, `email`, `displayName` and `role`.
+- Map `avatarUrl` from `UserEntity.avatarUrl` in list, add-member and role-update responses so clients can consistently display each member's profile image.
