@@ -1,8 +1,7 @@
 package com.ikoyki.webtools.kanban.backend.security;
 
-import com.ikoyki.webtools.kanban.backend.repository.UserRepository;
+import com.ikoyki.webtools.kanban.backend.service.UserProvisioningService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
@@ -20,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final UserRepository userRepository;
+    private final UserProvisioningService userProvisioningService;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -41,6 +40,8 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
         String userIdHeader = request.getHeader("X-User-Id");
         String userEmailHeader = request.getHeader("X-User-Email");
+        String displayNameHeader = request.getHeader("X-User-Display-Name");
+        String avatarUrlHeader = request.getHeader("X-User-Avatar-Url");
 
         if (userIdHeader == null || userIdHeader.isBlank()) {
             log.warn("Missing X-User-Id header");
@@ -50,16 +51,11 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
         try {
             UUID userId = UUID.fromString(userIdHeader);
 
-            // Validation: Ensure the user actually exists in the database
-            return userRepository.findById(userId)
-                    .map(user -> {
-                        log.debug("Resolved user {} ({})", userId, userEmailHeader);
-                        return userId;
-                    })
-                    .orElseThrow(() -> {
-                        log.warn("User ID {} not found in database", userId);
-                        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user identity");
-                    });
+            // X-User-* headers are replaced by the trusted API gateway after JWT validation.
+            // Provision only the Kanban-local profile; authentication and provider identity live centrally.
+            userProvisioningService.ensureLocalUser(userId, userEmailHeader, displayNameHeader, avatarUrlHeader);
+            log.debug("Resolved central identity {} ({}) to a Kanban-local profile", userId, userEmailHeader);
+            return userId;
         } catch (IllegalArgumentException e) {
             log.warn("Malformed X-User-Id header: {}", userIdHeader);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Malformed header");
