@@ -2,6 +2,7 @@ package com.ikoyki.webtools.kanban.backend.security;
 
 import com.ikoyki.webtools.kanban.backend.service.UserProvisioningService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
