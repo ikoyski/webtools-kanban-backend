@@ -18,7 +18,7 @@ docker compose up -d                  # Postgres 17 on :5432 (db/user kanban, pw
 
 ## Architecture in one screen
 
-`controller` (thin, `@AuthUser UUID`) → `service` (`@Transactional`, all rules, all authorization) → `repository` (Spring Data JPA) → PostgreSQL (Flyway `V1`, a single flattened migration; apply it to an empty database). `BoardMapper` turns entities into the normalized `BoardResponse` (`columns` and `cards` as ID-keyed maps, columns carry `cardIds`). Controllers are mounted at `/v1/...` (no `/api` prefix in this repo).
+`controller` (thin, `@AuthUser UUID`) → `service` (`@Transactional`, all rules, all authorization) → `repository` (Spring Data JPA) → PostgreSQL (Flyway `V1` baseline, then `V2` central-identity transition). Apply `V1` to an empty database. `V2` is intentionally destructive before first production use: it truncates `user_entity` with `CASCADE` to clear old app-owned user IDs and all dependent user data, then drops the obsolete `user_provider` table. Do not run it where existing users or boards must be retained. `BoardMapper` turns entities into the normalized `BoardResponse` (`columns` and `cards` as ID-keyed maps, columns carry `cardIds`). Controllers are mounted at `/v1/...` (no `/api` prefix in this repo).
 
 Other pieces: `UserProvisioningService` (creates this app's local profile for a central identity UUID), `UserService`/`UserController` (`GET /v1/users/me`), `EmailClient` (calls `webtools-email` via Eureka; nothing sends mail right now), Eureka/Config clients, Micrometer tracing to Zipkin. No `spring-boot-starter-security` in the pom and no `SecurityFilterChain`; there is no password or JWT code in this service.
 
