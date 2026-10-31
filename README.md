@@ -214,7 +214,7 @@ Flyway migrations in `src/main/resources/db/migration` (`V1`–`V6`).
 | `card` | Cards of a column: `description`, `priority`, `due_date`, `labels` (`JSONB` array of strings), `position`, `archived`, `archived_at` |
 | `card_comment` | Comments on a card, ordered by `created_at` |
 
-The Kanban-local `user_entity.id` is assigned from the central identity UUID; other application data IDs default to `uuidv7()` from `V1`. `V2` drops the former app-owned `user_provider` table because provider-subject mappings now live only in the Identity Server. The flattened `V1` must be applied to an empty database; older pre-flattened databases may need a reset as described by their migration history. Deleting a board cascades to its columns, cards and comments.
+The Kanban-local `user_entity.id` is assigned from the central identity UUID; other application data IDs default to `uuidv7()` from `V1`. The one-time `V2` transition deliberately runs `TRUNCATE user_entity CASCADE` and drops the former `user_provider` table: old backend-generated user IDs cannot be carried over as central identity IDs, and this deployment has no production users to migrate. This also clears user-owned boards, cards, comments and memberships. Do not apply this migration to an installation with data that must be retained. The flattened `V1` must be applied to an empty database; older pre-flattened databases may need a reset as described by their migration history.
 
 ## Board import and export
 
@@ -281,7 +281,7 @@ src/main/java/com/ikoyki/webtools/kanban/backend
 ├── config/       email client + executor
 ├── client/       EmailClient (declarative HTTP client)
 └── exception/    domain exceptions and GlobalExceptionHandler
-src/main/resources/db/migration/   Flyway V1 (flattened) + V2 (drop obsolete provider table)
+src/main/resources/db/migration/   Flyway V1 (flattened) + V2 (one-time user-data reset and provider-table removal)
 ```
 
 ## License
