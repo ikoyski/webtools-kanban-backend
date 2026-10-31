@@ -1,6 +1,6 @@
 # WebTools Kanban Backend
 
-REST API for the WebTools Kanban app: multiple boards per user, board-level roles (`VIEWER` / `EDITOR` / `OWNER`), ordered columns and cards, card comments and archiving, whole-board import/export, and an identity API for the auth server (Google sign-in today, more providers later). It has no passwords or tokens of its own.
+REST API for the WebTools Kanban app: multiple boards per user, board-level roles (`VIEWER` / `EDITOR` / `OWNER`), ordered columns and cards, card comments and archiving, whole-board import/export, and an identity API for the auth server (Google and GitHub sign-in). It has no passwords or tokens of its own.
 
 It is one service in a small microservice setup. It registers with Eureka, pulls its configuration from a Spring Cloud Config Server, and **expects an API gateway in front of it** that validates JWTs and forwards the caller's identity in an `X-User-Id` header. See [Trust model](#trust-model) before exposing it anywhere.
 
@@ -28,7 +28,7 @@ It is one service in a small microservice setup. It registers with Eureka, pulls
 | Framework | Spring Boot 3.4.2 (Web, Data JPA, Validation, Actuator) |
 | Service infra | Spring Cloud 2024.0.0: Eureka client, Config client, LoadBalancer |
 | Database | PostgreSQL 17, Flyway migrations, `JSONB` for card labels |
-| Identity | External sign-in (Google today) handled by a separate auth server; this service only maps external identities to users. No passwords, no JWT handling |
+| Identity | External sign-in (Google and GitHub) handled by a separate auth server; this service only maps external identities to users. No passwords, no JWT handling |
 | API docs | springdoc-openapi 2.8.5 (Swagger UI) |
 | Observability | Actuator, Micrometer Tracing (Brave) with Zipkin reporter |
 | Quality | JUnit 5 + Mockito, JaCoCo, SonarCloud in CI |
@@ -136,7 +136,7 @@ Not under `/v1`, so the gateway does not route it. Every call needs `X-Internal-
 | POST | `/federated` | Body: `provider`, `subject`, `email`, `emailVerified`, `displayName`, `avatarUrl`. Finds the user for that identity or creates it on first sign-in. `200 {id, email}`, `400`, `403 {"error":"email_not_verified"}`, `409 {"error":"email_in_use"}` |
 | POST | `/lookup` | Body: `id` or `email`. `200 {id, email}` or `404` |
 
-An identity is `(provider, subject)`; the email is never used to identify a person, and a new identity whose email already belongs to another user is refused rather than merged. Accepted providers are listed in `InternalUserService.ALLOWED_PROVIDERS` (`GOOGLE`).
+An identity is `(provider, subject)`; the email is never used to identify a person, and a new identity whose email already belongs to another user is refused rather than merged. Accepted providers are listed in `InternalUserService.ALLOWED_PROVIDERS` (`GOOGLE`, `GITHUB`). GitHub identities use the numeric GitHub account ID as the stable subject; the auth server supplies only the verified primary email retrieved with the `user:email` scope.
 
 ### Boards: `/v1/boards`
 
@@ -221,7 +221,7 @@ Flyway migrations in `src/main/resources/db/migration` (`V1`–`V6`).
 | Table | Purpose |
 |---|---|
 | `user_entity` | Users: unique `email`, `display_name`, `avatar_url` |
-| `user_provider` | External identities per user: `provider_type` (`GOOGLE`) and the provider's stable subject in `provider_id`; unique per `(provider_type, provider_id)` and per `(user_id, provider_type)` |
+| `user_provider` | External identities per user: `provider_type` (`GOOGLE`, `GITHUB`) and the provider's stable subject in `provider_id`; unique per `(provider_type, provider_id)` and per `(user_id, provider_type)` |
 | `board` | Board name, `created_by`, `created_at` |
 | `board_member` | `(board_id, user_id)` unique, `role` in `OWNER`/`EDITOR`/`VIEWER` |
 | `column_entity` | Columns of a board, ordered by integer `position` |

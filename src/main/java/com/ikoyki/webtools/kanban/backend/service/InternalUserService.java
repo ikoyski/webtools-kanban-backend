@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class InternalUserService {
 
     /** Providers this deployment accepts. Add "MICROSOFT", "GITHUB", ... when they are enabled. */
-    private static final Set<String> ALLOWED_PROVIDERS = Set.of("GOOGLE");
+    private static final Set<String> ALLOWED_PROVIDERS = Set.of("GOOGLE", "GITHUB");
 
     private static final int MAX_SUBJECT = 255;
     private static final int MAX_EMAIL = 255;
