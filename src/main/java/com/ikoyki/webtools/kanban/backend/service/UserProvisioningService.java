@@ -1,5 +1,6 @@
 package com.ikoyki.webtools.kanban.backend.service;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -41,7 +42,7 @@ public class UserProvisioningService {
                        display_name = COALESCE(user_entity.display_name, EXCLUDED.display_name),
                        avatar_url = COALESCE(user_entity.avatar_url, EXCLUDED.avatar_url),
                        updated_at = now()
-                """, centralUserId, email.trim().toLowerCase(), clean(displayName, 100), clean(avatarUrl, 512));
+                """, centralUserId, email.trim().toLowerCase(Locale.ROOT), clean(displayName, 100), clean(avatarUrl, 512));
 
         return users.findById(centralUserId)
                 .orElseThrow(() -> new ResponseStatusException(
