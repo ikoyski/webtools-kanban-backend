@@ -91,7 +91,7 @@ class InternalUserServiceTest {
 
     @Test
     void unknownProviderOrBlankSubjectIsInvalid() {
-        assertEquals(Status.INVALID, service.federated("GITHUB", "s", "x@example.com", true, null, null).status());
+        assertEquals(Status.INVALID, service.federated("UNSUPPORTED", "s", "x@example.com", true, null, null).status());
         assertEquals(Status.INVALID, service.federated("GOOGLE", " ", "x@example.com", true, null, null).status());
         assertEquals(Status.INVALID, service.federated("GOOGLE", "s", " ", true, null, null).status());
     }
