@@ -1,6 +1,6 @@
 # WebTools Kanban Backend
 
-REST API for the WebTools Kanban app: multiple boards per user, board-level roles (`VIEWER` / `EDITOR` / `OWNER`), ordered columns and cards, card comments and archiving, whole-board import/export, and an identity API for the auth server (Google and GitHub sign-in). It has no passwords or tokens of its own.
+REST API for the WebTools Kanban app: multiple boards per user, board-level roles (`VIEWER` / `EDITOR` / `OWNER`), ordered columns and cards, card comments and archiving, and whole-board import/export. Authentication is centralized in the Webtools Identity Server; this service owns only Kanban-local profiles and application data.
 
 It is one service in a small microservice setup. It registers with Eureka, pulls its configuration from a Spring Cloud Config Server, and **expects an API gateway in front of it** that validates JWTs and forwards the caller's identity in an `X-User-Id` header. See [Trust model](#trust-model) before exposing it anywhere.
 
@@ -28,7 +28,7 @@ It is one service in a small microservice setup. It registers with Eureka, pulls
 | Framework | Spring Boot 3.4.2 (Web, Data JPA, Validation, Actuator) |
 | Service infra | Spring Cloud 2024.0.0: Eureka client, Config client, LoadBalancer |
 | Database | PostgreSQL 17, Flyway migrations, `JSONB` for card labels |
-| Identity | External sign-in (Google and GitHub) handled by a separate auth server; this service only maps external identities to users. No passwords, no JWT handling |
+| Identity | Central identity UUID supplied by the trusted gateway; local Kanban profile provisioning. No provider subjects, passwords or JWT handling |
 | API docs | springdoc-openapi 2.8.5 (Swagger UI) |
 | Observability | Actuator, Micrometer Tracing (Brave) with Zipkin reporter |
 | Quality | JUnit 5 + Mockito, JaCoCo, SonarCloud in CI |
@@ -38,11 +38,11 @@ It is one service in a small microservice setup. It registers with Eureka, pulls
 This service **does not validate JWTs** on incoming requests. There is no security filter chain and no JWT filter.
 
 - Sign-in is handled by a separate auth server, and tokens are validated by the gateway. This service never sees a password or a token.
-- Every other endpoint identifies the caller from the `X-User-Id` request header (a UUID). The header is checked only for being well-formed and matching a row in `user_entity`. It is not proof that the caller *is* that user.
-- The gateway is expected to validate the token and set `X-User-Id` (and `X-User-Email`, which is only logged).
-- The auth server calls `/internal/v1/users/**` directly (not through the gateway), authenticated by the shared `X-Internal-Key`.
+- The gateway validates the Auth Server's JWT signature, issuer, expiry, exact Kanban API audience and required Kanban scopes, then replaces caller-supplied identity headers with values from the verified token: `X-User-Id`, `X-User-Email`, `X-User-Display-Name` and `X-User-Avatar-Url`.
+- `X-User-Id` is the stable central identity UUID (`sub` / compatibility `uid`), not a provider subject. `AuthUserArgumentResolver` provisions a Kanban-local `user_entity` row on first authenticated API use, keyed by that UUID.
+- Board roles and all business permissions remain local to Kanban. This service never accepts provider identity data and does not call the Auth Server's identity database.
 
-**If this service is reachable without going through the gateway, anyone can impersonate any user by sending a forged header.** Restrict it at the network level (private subnet, security group, internal-only ingress). Application code can't fix this. Don't "fix" it by adding JWT checks to individual controllers; changing the model is an architecture decision.
+**If this service is reachable without going through the gateway, anyone can impersonate any user by sending forged headers.** Restrict it at the network level (private subnet, security group, internal-only ingress).
 
 ## Getting started
 
@@ -72,7 +72,6 @@ The repository deliberately contains **no datasource URL, internal API key or Eu
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/kanban
 export SPRING_DATASOURCE_USERNAME=kanban
 export SPRING_DATASOURCE_PASSWORD=kanban_dev_only
-export INTERNAL_API_KEY='replace-with-a-long-random-string'   # shared with the auth server
 export EUREKA_CLIENT_ENABLED=false
 ```
 
@@ -111,7 +110,6 @@ Properties this service needs:
 | Property | Required | Purpose |
 |---|---|---|
 | `spring.datasource.url` / `username` / `password` | yes | PostgreSQL connection |
-| `internal.api-key` | yes (no default) | Shared secret the auth server sends as `X-Internal-Key` to `/internal/**`; use a long random value |
 | `webtools.email.base-url` | no | Eureka name of the email service; default `http://webtools-email` |
 | `webtools.email.api-key` | no | Sent as `X-Internal-Api-Key` when set |
 | `webtools.email.connect-timeout` / `read-timeout` | no | Defaults `2s` / `5s` |
@@ -126,17 +124,6 @@ All paths below are relative to the service root (e.g. `/v1/boards`). Every `/v1
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/me` | Needs `X-User-Id`. Returns `{id, email, displayName, avatarUrl}` |
-
-### Internal (auth server only): `/internal/v1/users`
-
-Not under `/v1`, so the gateway does not route it. Every call needs `X-Internal-Key`; without it the answer is `401`.
-
-| Method | Path | Notes |
-|---|---|---|
-| POST | `/federated` | Body: `provider`, `subject`, `email`, `emailVerified`, `displayName`, `avatarUrl`. Finds the user for that identity or creates it on first sign-in. `200 {id, email}`, `400`, `403 {"error":"email_not_verified"}`, `409 {"error":"email_in_use"}` |
-| POST | `/lookup` | Body: `id` or `email`. `200 {id, email}` or `404` |
-
-An identity is `(provider, subject)`; the email is never used to identify a person, and a new identity whose email already belongs to another user is refused rather than merged. Accepted providers are listed in `InternalUserService.ALLOWED_PROVIDERS` (`GOOGLE`, `GITHUB`). GitHub identities use the numeric GitHub account ID as the stable subject; the auth server supplies only the verified primary email retrieved with the `user:email` scope.
 
 ### Boards: `/v1/boards`
 
@@ -221,14 +208,13 @@ Flyway migrations in `src/main/resources/db/migration` (`V1`–`V6`).
 | Table | Purpose |
 |---|---|
 | `user_entity` | Users: unique `email`, `display_name`, `avatar_url` |
-| `user_provider` | External identities per user: `provider_type` (`GOOGLE`, `GITHUB`) and the provider's stable subject in `provider_id`; unique per `(provider_type, provider_id)` and per `(user_id, provider_type)` |
 | `board` | Board name, `created_by`, `created_at` |
 | `board_member` | `(board_id, user_id)` unique, `role` in `OWNER`/`EDITOR`/`VIEWER` |
 | `column_entity` | Columns of a board, ordered by integer `position` |
 | `card` | Cards of a column: `description`, `priority`, `due_date`, `labels` (`JSONB` array of strings), `position`, `archived`, `archived_at` |
 | `card_comment` | Comments on a card, ordered by `created_at` |
 
-Primary keys default to a `uuidv7()` PL/pgSQL function defined in `V1` (which also enables `pgcrypto`). `V1` is a single flattened migration, so start from an **empty database**; a database that already ran the older `V1`–`V6` must be dropped and recreated. Deleting a board cascades to its columns, cards and comments.
+The Kanban-local `user_entity.id` is assigned from the central identity UUID; other application data IDs default to `uuidv7()` from `V1`. The one-time `V2` transition deliberately runs `TRUNCATE user_entity CASCADE` and drops the former `user_provider` table: old backend-generated user IDs cannot be carried over as central identity IDs, and this deployment has no production users to migrate. This also clears user-owned boards, cards, comments and memberships. Do not apply this migration to an installation with data that must be retained. The flattened `V1` must be applied to an empty database; older pre-flattened databases may need a reset as described by their migration history.
 
 ## Board import and export
 
@@ -291,11 +277,11 @@ src/main/java/com/ikoyki/webtools/kanban/backend
 ├── entity/       JPA entities and enums (BoardRole, Priority)
 ├── dto/          request/ and response/ records and beans
 ├── mapper/       BoardMapper (entities → normalized responses)
-├── security/     @AuthUser + resolver (X-User-Id)
+├── security/     @AuthUser + resolver (central identity headers)
 ├── config/       email client + executor
 ├── client/       EmailClient (declarative HTTP client)
 └── exception/    domain exceptions and GlobalExceptionHandler
-src/main/resources/db/migration/   Flyway V1 (flattened)
+src/main/resources/db/migration/   Flyway V1 (flattened) + V2 (one-time user-data reset and provider-table removal)
 ```
 
 ## License

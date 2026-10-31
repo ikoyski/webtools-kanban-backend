@@ -13,26 +13,24 @@ docker compose up -d                  # Postgres 17 on :5432 (db/user kanban, pw
 ```
 
 - Builds from a source archive without `.git` can fail in `git-commit-id-plugin`; use a clone.
-- The app won't start without datasource properties and `internal.api-key` (the shared secret for the auth server's calls to `/internal/**`). They come from a Config Server (default `http://localhost:8089`, `user`/`password`, `optional:`) or env vars. No defaults live in the repo. `internal.api-key` has **no default** (the controller fails fast when it is blank). Env-var example is in `README.md`.
+- The app won't start without datasource properties. They come from a Config Server (default `http://localhost:8089`, `user`/`password`, `optional:`) or env vars. No datasource defaults live in the repo.
 - Profiles: `application.yaml` (default), `application-public.yaml` / `application-test.yaml` (Config Server from `CONFIG_SERVER_URL`/`CONFIG_USER`/`CONFIG_PASSWORD`). The Dockerfile uses profile `private`, for which there is no file in this repo.
 
 ## Architecture in one screen
 
-`controller` (thin, `@AuthUser UUID`) → `service` (`@Transactional`, all rules, all authorization) → `repository` (Spring Data JPA) → PostgreSQL (Flyway `V1`, a single flattened migration; apply it to an empty database). `BoardMapper` turns entities into the normalized `BoardResponse` (`columns` and `cards` as ID-keyed maps, columns carry `cardIds`). Controllers are mounted at `/v1/...` (no `/api` prefix in this repo).
+`controller` (thin, `@AuthUser UUID`) → `service` (`@Transactional`, all rules, all authorization) → `repository` (Spring Data JPA) → PostgreSQL (Flyway `V1` baseline, then `V2` central-identity transition). Apply `V1` to an empty database. `V2` is intentionally destructive before first production use: it truncates `user_entity` with `CASCADE` to clear old app-owned user IDs and all dependent user data, then drops the obsolete `user_provider` table. Do not run it where existing users or boards must be retained. `BoardMapper` turns entities into the normalized `BoardResponse` (`columns` and `cards` as ID-keyed maps, columns carry `cardIds`). Controllers are mounted at `/v1/...` (no `/api` prefix in this repo).
 
-Other pieces: `InternalUserService`/`InternalUserController` (identity API for the auth server), `UserService`/`UserController` (`GET /v1/users/me`), `EmailClient` (calls `webtools-email` via Eureka; nothing sends mail right now), Eureka/Config clients, Micrometer tracing to Zipkin. No `spring-boot-starter-security` in the pom and no `SecurityFilterChain`; there is no password or JWT code in this service.
+Other pieces: `UserProvisioningService` (creates this app's local profile for a central identity UUID), `UserService`/`UserController` (`GET /v1/users/me`), `EmailClient` (calls `webtools-email` via Eureka; nothing sends mail right now), Eureka/Config clients, Micrometer tracing to Zipkin. No `spring-boot-starter-security` in the pom and no `SecurityFilterChain`; there is no password or JWT code in this service.
 
 ## Authentication and trust boundary
 
 **Read before touching `@AuthUser`, `AuthUserArgumentResolver`, or anything auth-related.**
 
-- Sign-in happens outside this service: the **auth server** authenticates people with an external identity provider (Google and GitHub) and issues the tokens; the **gateway** validates them and injects `X-User-Id` / `X-User-Email`. This service never sees a password or a token, and never validates one.
-- All `/v1/**` endpoints use `@AuthUser UUID`, resolved by `AuthUserArgumentResolver` from the `X-User-Id` header: it must be a UUID and exist in `user_entity`. That is identity *by assertion*; `X-User-Email` is only logged.
-- If the service is reachable directly, anyone can impersonate anyone. That must be fixed at network/ingress level, not in controllers. Don't add ad hoc token checks to individual endpoints; changing this is an architecture decision, not a local patch.
-- **Internal API (`/internal/v1/users/**`)** is for the auth server only. It is deliberately outside `/v1`, so the gateway's `/kanban-backend/v1/**` route never exposes it, and every call needs `X-Internal-Key` equal to `internal.api-key` (constant-time compare). Responses are built without exceptions so the catch-all handler can't change them.
-  - `POST /federated` `{provider, subject, email, emailVerified, displayName, avatarUrl}`: find-or-create. `200 {id,email}`; `400` bad input or provider not in `ALLOWED_PROVIDERS`; `403 email_not_verified`; `409 email_in_use`.
-  - `POST /lookup` `{id}` or `{email}` → `200 {id,email}` or `404`.
-- **Identity rules (`InternalUserService`):** an identity is `(provider_type, provider_id)` where `provider_id` is the provider's stable subject (Google OIDC `sub`; GitHub numeric account ID); the email is never the identity. The provider must assert a verified email. A new identity whose email already belongs to another user is refused (409), never merged: merging by email lets someone who controls an unverified address at another provider take over an account. To enable a provider, add it to `ALLOWED_PROVIDERS`; no schema change is needed. GitHub email verification is performed by the auth server using the `user:email` scope and `/user/emails`; this service receives only the verified primary email and must continue to reject unverified email claims.
+- Sign-in happens at the **Webtools Identity Server**. It authenticates through configured providers, owns the central person identity and issues signed tokens. The **API gateway** validates token signature, issuer, exact resource audience and application scopes, then replaces caller-provided identity headers with claims from the verified token.
+- The verified `X-User-Id` is the central UUID (`sub` / compatibility `uid`). `X-User-Email`, `X-User-Display-Name` and `X-User-Avatar-Url` are also forwarded from signed claims. This service never sees a password or token and never validates JWTs.
+- All `/v1/**` endpoints use `@AuthUser UUID`. `AuthUserArgumentResolver` invokes `UserProvisioningService` to create/load a Kanban-local `user_entity` row keyed by that central UUID. The provisioning upsert is idempotent and preserves app-edited display name/avatar values once set.
+- Kanban board roles and permissions remain local. Keep every board-scoped permission check in `BoardAccessService`; the identity server never decides whether someone is an OWNER/EDITOR/VIEWER.
+- This service must be reachable only through the trusted gateway. If direct access is possible, forged `X-User-*` headers can impersonate users; enforce network isolation at ingress. Do not add ad hoc token parsing to controllers.
 
 ## Authorization (RBAC)
 
@@ -54,7 +52,7 @@ Also: "last owner" violations throw `BadRequestException`, not a 409; `deleteCol
 
 - **Naming:** `[Entity]Entity`, `[Entity]Repository`, `[Entity]Service`, `[Entity]Controller`, DTOs `[Action][Entity]Request` / `[Entity]Response`.
 - **Patterns:** Lombok for boilerplate; services own logic and `@Transactional`; controllers stay thin; one `@RestControllerAdvice`; mutating endpoints return the updated resource (deletes return `204`).
-- **IDs:** DB-generated via the `uuidv7()` function from `V1` (entities use `@Generated(INSERT)`, `insertable=false`). Exception: `BoardMemberEntity` IDs are assigned in code with `UUID.randomUUID()` (v4).
+- **IDs:** The Kanban-local `UserEntity.id` is assigned from the central identity UUID. Other entity IDs are DB-generated via `uuidv7()` from `V1` (entities use `@Generated(INSERT)`, `insertable=false`). Exception: `BoardMemberEntity` IDs are assigned in code with `UUID.randomUUID()` (v4).
 - **Schema changes:** add a new `V<next>__description.sql`; never edit applied migrations. (The original `V1`–`V6` were flattened into one `V1` while the database was still empty; that was a one-off.) Schema is managed by Flyway.
 - **Ordering (`position`):** plain integers `0..n-1`. Card create/delete/move and column-transfer re-index the affected columns. But: column deletion doesn't re-index remaining columns, archive/restore don't re-index, `reorderColumns` stores the client's positions as given, and import uses the payload's column positions. Archived cards stay in their column's position sequence and are still returned by `findByColumnIdOrderByPositionAsc`, so they count toward "column not empty" and get transferred with the rest.
 - **Partial updates:** `PATCH /cards/{id}` ignores `null` fields, so `dueDate` can't be cleared; clearing `description` works by sending `""`.
@@ -92,8 +90,8 @@ Also: "last owner" violations throw `BadRequestException`, not a 409; `deleteCol
 - Don't skip `BoardAccessService`, or check the role against the wrong board (always resolve the *owning* board; mind destination columns).
 - Don't reorder `BoardRole`, and don't edit applied Flyway migrations.
 - Don't sanitize or transform rich-text fields server-side without cross-repo agreement.
-- Don't log secrets, the internal key or email bodies, and don't route the email client through the gateway.
-- Don't merge accounts by email, and don't expose `/internal/**` through the gateway or the internet.
+- Don't log tokens, secrets or email bodies, and don't route the email client through the gateway.
+- Don't store provider subjects in this database or merge identities by email; the central Identity Server owns provider identities.
 - Don't commit real secrets: the compose password is dev-only; everything else belongs in Config Server or env.
 
 
