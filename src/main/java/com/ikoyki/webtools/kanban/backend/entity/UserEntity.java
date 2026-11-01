@@ -2,10 +2,8 @@ package com.ikoyki.webtools.kanban.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Generated;
-import org.hibernate.annotations.GenerationTime;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user_entity")
@@ -16,8 +14,7 @@ import java.util.*;
 @Builder
 public class UserEntity {
     @Id
-    @Generated(GenerationTime.INSERT)
-    @Column(updatable = false, insertable = false)
+    @Column(updatable = false, nullable = false)
     private UUID id;
 
     @Column(unique = true, nullable = false)
@@ -30,6 +27,4 @@ public class UserEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<UserProviderEntity> providers = new HashSet<>();
 }
