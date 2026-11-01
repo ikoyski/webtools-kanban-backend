@@ -43,22 +43,22 @@ class GlobalExceptionHandlerWebMvcTest {
     @RestController
     static class TestController {
         @GetMapping("/test/bad-request")
-        void badRequest() {
+        public void badRequest() {
             throw new BadRequestException("Invalid request");
         }
 
         @GetMapping("/test/forbidden")
-        void forbidden() {
+        public void forbidden() {
             throw new ForbiddenBoardAccessException("Not a board member");
         }
 
         @GetMapping("/test/unauthorized")
-        void unauthorized() {
+        public void unauthorized() {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing header");
         }
 
         @GetMapping("/test/unexpected")
-        void unexpected() {
+        public void unexpected() {
             throw new IllegalStateException("Unexpected failure");
         }
     }
