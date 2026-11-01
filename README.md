@@ -199,7 +199,7 @@ Handled by `GlobalExceptionHandler`.
 | Bean Validation failure (`@Valid`) | `400` | `{"<field>": "<message>"}` |
 | Any other `RuntimeException` | `500` | `{"error": "INTERNAL_SERVER_ERROR", "message": "..."}` |
 
-**Known issue:** the catch-all `RuntimeException` handler also swallows exceptions that carry their own `@ResponseStatus` (`BadRequestException`, `ForbiddenBoardAccessException`, `BadCredentialsException`) and the `ResponseStatusException` used for missing/invalid `X-User-Id`. Spring resolves `@ExceptionHandler` methods before `@ResponseStatus`, so these likely come back as `500 INTERNAL_SERVER_ERROR` with the real reason in `message`, rather than the `400` / `403` / `401` their declarations suggest. No test covers the HTTP layer, so verify against a running instance before relying on specific codes for these cases.
+The handler preserves the intended HTTP statuses: domain bad requests return `400`, board-access denials return `403`, missing or malformed trusted identity headers return `401`, and unexpected runtime failures return `500`. These mappings are covered by `GlobalExceptionHandlerWebMvcTest`.
 
 ## Data model
 

@@ -12,7 +12,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void preservesResponseStatusExceptionStatus() {
-        var response = handler.handleRuntime(
+        var response = handler.handleResponseStatus(
                 new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid central identity claims"));
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
@@ -22,7 +22,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void preservesStatusFromAnnotatedDomainExceptions() {
-        var response = handler.handleRuntime(new ForbiddenBoardAccessException("Not a board member"));
+        var response = handler.handleForbidden(new ForbiddenBoardAccessException("Not a board member"));
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         assertEquals("FORBIDDEN", response.getBody().getError());

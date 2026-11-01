@@ -6,6 +6,7 @@ import com.ikoyki.webtools.kanban.backend.entity.ColumnEntity;
 import com.ikoyki.webtools.kanban.backend.entity.BoardEntity;
 import com.ikoyki.webtools.kanban.backend.entity.BoardRole;
 import com.ikoyki.webtools.kanban.backend.exception.ColumnNotEmptyException;
+import com.ikoyki.webtools.kanban.backend.exception.BadRequestException;
 import com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
@@ -93,6 +94,9 @@ public class ColumnService {
             ColumnEntity destColumn = columnRepository.findById(transferToId)
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Destination column not found"));
+            if (!column.getBoard().getId().equals(destColumn.getBoard().getId())) {
+                throw new BadRequestException("Destination column must belong to the same board");
+            }
 
             List<CardEntity> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(transferToId);
 
