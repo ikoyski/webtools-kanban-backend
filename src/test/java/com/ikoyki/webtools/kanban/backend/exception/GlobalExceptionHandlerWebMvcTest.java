@@ -41,7 +41,7 @@ class GlobalExceptionHandlerWebMvcTest {
     }
 
     @RestController
-    static class TestController {
+    public static class TestController {
         @GetMapping("/test/bad-request")
         public void badRequest() {
             throw new BadRequestException("Invalid request");
