@@ -5,13 +5,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,35 +62,32 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenBoardAccessException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenBoardAccessException ex) {
+        return error(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus resolved = HttpStatus.resolve(ex.getStatusCode().value());
+        String error = resolved == null ? "HTTP_" + ex.getStatusCode().value() : resolved.name();
+        String message = ex.getReason() == null ? ex.getStatusCode().toString() : ex.getReason();
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(ErrorResponse.builder().error(error).message(message).build());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
-        if (ex instanceof ResponseStatusException responseStatusException) {
-            HttpStatusCode status = responseStatusException.getStatusCode();
-            HttpStatus resolved = HttpStatus.resolve(status.value());
-            return ResponseEntity.status(status)
-                    .body(ErrorResponse.builder()
-                            .error(resolved == null ? "HTTP_" + status.value() : resolved.name())
-                            .message(responseStatusException.getReason() == null
-                                    ? status.toString() : responseStatusException.getReason())
-                            .build());
-        }
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
 
-        ResponseStatus responseStatus = AnnotatedElementUtils.findMergedAnnotation(
-                ex.getClass(), ResponseStatus.class);
-        if (responseStatus != null) {
-            HttpStatus status = responseStatus.code();
-            return ResponseEntity.status(status)
-                    .body(ErrorResponse.builder()
-                            .error(status.name())
-                            .message(responseStatus.reason().isBlank()
-                                    ? ex.getMessage() : responseStatus.reason())
-                            .build());
-        }
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ErrorResponse.builder()
-                        .error("INTERNAL_SERVER_ERROR")
-                        .message(ex.getMessage())
-                        .build());
+    private ResponseEntity<ErrorResponse> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status)
+                .body(ErrorResponse.builder().error(status.name()).message(message).build());
     }
 }
