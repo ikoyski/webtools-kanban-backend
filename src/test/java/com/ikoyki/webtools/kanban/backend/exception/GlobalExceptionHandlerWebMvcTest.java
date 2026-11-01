@@ -3,27 +3,25 @@ package com.ikoyki.webtools.kanban.backend.exception;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import com.ikoyki.webtools.kanban.backend.service.UserProvisioningService;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-@WebMvcTest(controllers = GlobalExceptionHandlerWebMvcTest.TestController.class)
-@Import(GlobalExceptionHandler.class)
 class GlobalExceptionHandlerWebMvcTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
-    private UserProvisioningService userProvisioningService;
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(new TestController())
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Test
     void mapsBadRequestDomainExceptionTo400() throws Exception {
