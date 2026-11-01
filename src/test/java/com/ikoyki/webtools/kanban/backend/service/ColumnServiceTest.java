@@ -56,4 +56,30 @@ class ColumnServiceTest {
 
         assertThrows(ForbiddenBoardAccessException.class, () -> columnService.renameColumn(columnId, "New Title", userId));
     }
+    @Test
+    void deleteColumn_rejectsTransferToAnotherBoardWithoutMutatingEitherBoard() {
+        UUID destinationColumnId = UUID.randomUUID();
+        BoardEntity sourceBoard = new BoardEntity();
+        sourceBoard.setId(boardId);
+        BoardEntity destinationBoard = new BoardEntity();
+        destinationBoard.setId(UUID.randomUUID());
+
+        ColumnEntity sourceColumn = new ColumnEntity();
+        sourceColumn.setBoard(sourceBoard);
+        ColumnEntity destinationColumn = new ColumnEntity();
+        destinationColumn.setBoard(destinationBoard);
+        List<CardEntity> sourceCards = List.of(new CardEntity());
+
+        when(columnRepository.findById(columnId)).thenReturn(Optional.of(sourceColumn));
+        when(cardRepository.findByColumnIdOrderByPositionAsc(columnId)).thenReturn(sourceCards);
+        when(columnRepository.findById(destinationColumnId)).thenReturn(Optional.of(destinationColumn));
+
+        assertThrows(BadRequestException.class,
+                () -> columnService.deleteColumn(columnId, destinationColumnId, userId));
+
+        verify(cardRepository, never()).findByColumnIdOrderByPositionAsc(destinationColumnId);
+        verify(cardRepository, never()).saveAll(anyList());
+        verify(columnRepository, never()).delete(any(ColumnEntity.class));
+    }
+
 }
