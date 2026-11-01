@@ -72,6 +72,7 @@ class CardServiceTest {
         destinationBoard.setId(UUID.randomUUID());
 
         ColumnEntity sourceColumn = new ColumnEntity();
+        sourceColumn.setId(columnId);
         sourceColumn.setBoard(sourceBoard);
         ColumnEntity destinationColumn = new ColumnEntity();
         destinationColumn.setBoard(destinationBoard);
