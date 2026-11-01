@@ -63,4 +63,30 @@ class CardServiceTest {
 
         assertThrows(ForbiddenBoardAccessException.class, () -> cardService.updateCard(cardId, "Title", "Desc", Priority.MEDIUM, null, Collections.emptyList(), userId));
     }
+    @Test
+    void moveCard_rejectsDestinationOnAnotherBoardWithoutMutatingEitherBoard() {
+        UUID destinationColumnId = UUID.randomUUID();
+        BoardEntity sourceBoard = new BoardEntity();
+        sourceBoard.setId(UUID.randomUUID());
+        BoardEntity destinationBoard = new BoardEntity();
+        destinationBoard.setId(UUID.randomUUID());
+
+        ColumnEntity sourceColumn = new ColumnEntity();
+        sourceColumn.setBoard(sourceBoard);
+        ColumnEntity destinationColumn = new ColumnEntity();
+        destinationColumn.setBoard(destinationBoard);
+        CardEntity card = new CardEntity();
+        card.setColumn(sourceColumn);
+
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(columnRepository.findById(destinationColumnId)).thenReturn(Optional.of(destinationColumn));
+
+        assertThrows(BadRequestException.class,
+                () -> cardService.moveCard(cardId, destinationColumnId, 0, userId));
+
+        verify(cardRepository, never()).findByColumnIdOrderByPositionAsc(any());
+        verify(cardRepository, never()).save(any(CardEntity.class));
+        verify(cardRepository, never()).saveAll(anyList());
+    }
+
 }
