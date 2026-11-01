@@ -7,6 +7,7 @@ import com.ikoyki.webtools.kanban.backend.entity.BoardRole;
 import com.ikoyki.webtools.kanban.backend.repository.CardRepository;
 import com.ikoyki.webtools.kanban.backend.repository.ColumnRepository;
 import com.ikoyki.webtools.kanban.backend.exception.ResourceNotFoundException;
+import com.ikoyki.webtools.kanban.backend.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,16 +99,22 @@ public class CardService {
 
             reassignPositions(siblings);
         } else {
-            // Remove from source
+            // Resolve and validate the destination before changing either column.
+            ColumnEntity destColumn = columnRepository.findById(destColumnId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Destination column not found"));
+            UUID sourceBoardId = card.getColumn().getBoard().getId();
+            UUID destinationBoardId = destColumn.getBoard().getId();
+            if (!sourceBoardId.equals(destinationBoardId)) {
+                throw new BadRequestException("Destination column must belong to the same board");
+            }
+
+            // Remove from source only after the destination has passed validation.
             List<CardEntity> sourceSiblings = cardRepository.findByColumnIdOrderByPositionAsc(sourceColumnId);
             sourceSiblings.remove(card);
             reassignPositions(sourceSiblings);
 
             // Insert into destination
-            ColumnEntity destColumn = columnRepository.findById(destColumnId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Destination column not found"));
-
             List<CardEntity> destSiblings = cardRepository.findByColumnIdOrderByPositionAsc(destColumnId);
             int pos = Math.min(destPosition, destSiblings.size());
 
