@@ -35,7 +35,7 @@ public class UserProvisioningService {
         // The Auth Server enforces global email uniqueness. The local row is keyed by the stable
         // central UUID; repeated API requests are idempotent and do not overwrite app-edited profile fields.
         jdbc.update("""
-                INSERT INTO user_entity (id, email, display_name, avatar_url)
+                INSERT INTO kanban.user_entity (id, email, display_name, avatar_url)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT (id) DO UPDATE
                    SET email = EXCLUDED.email,
