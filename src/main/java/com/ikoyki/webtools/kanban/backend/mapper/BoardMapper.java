@@ -29,15 +29,16 @@ public class BoardMapper {
                 if (column == null)
                     continue;
 
-                // 1. Extract all Card IDs to satisfy the column's cardIds layout
+                // Include only active cards in the column's cardIds layout.
                 List<UUID> cardIds = Optional.ofNullable(column.getCards())
                         .orElse(Collections.emptyList())
                         .stream()
                         .filter(Objects::nonNull)
+                        .filter(card -> !card.isArchived())
                         .map(CardEntity::getId)
                         .collect(Collectors.toList());
 
-                // 2. Build the flat Column Response
+                // Build the flat Column Response
                 ColumnResponse columnResponse = ColumnResponse.builder()
                         .id(column.getId())
                         .title(column.getTitle())
@@ -47,23 +48,20 @@ public class BoardMapper {
 
                 columnMap.put(column.getId(), columnResponse);
 
-                // 3. Map nested cards into the single root-level cards dictionary
+                // Map active cards into the single root-level cards dictionary.
                 if (column.getCards() != null) {
                     for (CardEntity card : column.getCards()) {
-                        if (card == null)
+                        if (card == null || card.isArchived())
                             continue;
 
-                        if (!card.isArchived()) {
-                            CardResponse cardResponse = toCardResponse(card);
-                            cardMap.put(card.getId(), cardResponse);
-                        }
+                        CardResponse cardResponse = toCardResponse(card);
+                        cardMap.put(card.getId(), cardResponse);
                     }
                 }
             }
         }
 
-        // 4. Construct and return final BoardResponse matching frontend state
-        // properties
+        // Construct and return final BoardResponse matching frontend state properties.
         return BoardResponse.builder()
                 .id(board.getId())
                 .name(board.getName())
@@ -78,11 +76,12 @@ public class BoardMapper {
             return null;
         }
 
-        // Pulling all card IDs to satisfy the updated frontend state normalization
+        // Include only active cards in standalone column responses as well.
         List<UUID> cardIds = Optional.ofNullable(column.getCards())
                 .orElse(Collections.emptyList())
                 .stream()
                 .filter(Objects::nonNull)
+                .filter(card -> !card.isArchived())
                 .map(CardEntity::getId)
                 .collect(Collectors.toList());
 
