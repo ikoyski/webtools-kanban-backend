@@ -20,7 +20,6 @@ public class BoardMapper {
             return null;
         }
 
-        // Initialize our target top-level maps
         Map<UUID, ColumnResponse> columnMap = new LinkedHashMap<>();
         Map<UUID, CardResponse> cardMap = new LinkedHashMap<>();
 
@@ -29,7 +28,6 @@ public class BoardMapper {
                 if (column == null)
                     continue;
 
-                // Include only active cards in the column's cardIds layout.
                 List<UUID> cardIds = Optional.ofNullable(column.getCards())
                         .orElse(Collections.emptyList())
                         .stream()
@@ -38,7 +36,6 @@ public class BoardMapper {
                         .map(CardEntity::getId)
                         .collect(Collectors.toList());
 
-                // Build the flat Column Response
                 ColumnResponse columnResponse = ColumnResponse.builder()
                         .id(column.getId())
                         .title(column.getTitle())
@@ -48,7 +45,6 @@ public class BoardMapper {
 
                 columnMap.put(column.getId(), columnResponse);
 
-                // Map active cards into the single root-level cards dictionary.
                 if (column.getCards() != null) {
                     for (CardEntity card : column.getCards()) {
                         if (card == null || card.isArchived())
@@ -61,7 +57,6 @@ public class BoardMapper {
             }
         }
 
-        // Construct and return final BoardResponse matching frontend state properties.
         return BoardResponse.builder()
                 .id(board.getId())
                 .name(board.getName())
@@ -76,7 +71,6 @@ public class BoardMapper {
             return null;
         }
 
-        // Include only active cards in standalone column responses as well.
         List<UUID> cardIds = Optional.ofNullable(column.getCards())
                 .orElse(Collections.emptyList())
                 .stream()

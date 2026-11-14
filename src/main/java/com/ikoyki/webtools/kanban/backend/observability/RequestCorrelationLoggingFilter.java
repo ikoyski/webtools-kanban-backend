@@ -18,11 +18,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/**
- * Adds a validated request ID to every servlet request and emits a safe access
- * summary to stdout. Request/response bodies, query strings and credentials are
- * deliberately never logged.
- */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestCorrelationLoggingFilter extends OncePerRequestFilter {
@@ -34,7 +29,9 @@ public class RequestCorrelationLoggingFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String requestId = validatedRequestId(request.getHeader(REQUEST_ID_HEADER));
+        String candidate = request.getHeader(REQUEST_ID_HEADER);
+        String requestId = candidate != null && SAFE_REQUEST_ID.matcher(candidate).matches()
+                ? candidate : UUID.randomUUID().toString();
         String previousRequestId = MDC.get("requestId");
         long startedAt = System.nanoTime();
 
@@ -54,7 +51,8 @@ public class RequestCorrelationLoggingFilter extends OncePerRequestFilter {
             String relativePath = path.startsWith(request.getContextPath())
                     ? path.substring(request.getContextPath().length()) : path;
 
-            if (!isHealthOrMetricsPath(relativePath)) {
+            if (!relativePath.startsWith("/actuator/health")
+                    && !relativePath.equals("/actuator/prometheus")) {
                 if (failure != null) {
                     log.error("http_request_failed method={} path={} status={} durationMs={}",
                             request.getMethod(), path, status, durationMs, failure);
@@ -70,21 +68,8 @@ public class RequestCorrelationLoggingFilter extends OncePerRequestFilter {
                 }
             }
 
-            if (previousRequestId == null) {
-                MDC.remove("requestId");
-            } else {
-                MDC.put("requestId", previousRequestId);
-            }
+            if (previousRequestId == null) MDC.remove("requestId");
+            else MDC.put("requestId", previousRequestId);
         }
-    }
-
-    private static String validatedRequestId(String candidate) {
-        return candidate != null && SAFE_REQUEST_ID.matcher(candidate).matches()
-                ? candidate : UUID.randomUUID().toString();
-    }
-
-    private static boolean isHealthOrMetricsPath(String path) {
-        return path.startsWith("/actuator/health")
-                || path.equals("/actuator/prometheus");
     }
 }
