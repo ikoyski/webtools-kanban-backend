@@ -13,8 +13,14 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @Data
     @Builder
@@ -83,7 +89,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        String requestId = MDC.get("requestId");
+        if (requestId == null || requestId.isBlank()) {
+            requestId = "unavailable";
+        }
+        log.error("Unhandled application exception requestId={}", requestId, ex);
+        return error(HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected server error occurred. Reference ID: " + requestId);
     }
 
     private ResponseEntity<ErrorResponse> error(HttpStatus status, String message) {
